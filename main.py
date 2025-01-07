@@ -1,20 +1,18 @@
 import discord
+from discord.ext import commands
 
-client = discord.Client()
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix=".", intents = intents)
 
 with open('token.txt') as file:
     token = file.read()
 
-@client.event
+@bot.event
 async def on_ready():
-    print('We have logged in as {0.user}.format(client)')
+    print('We have logged in as {0.user}'.format(bot))
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-    
-    if message.content.startswith('.hello'):
-        await message.channel.send('shut up :Love:')
+@bot.command()
+async def hello(ctx):
+    await ctx.send('shut up <:dom:1326268370676486317>')
 
-client.run(token)
+bot.run(token)
