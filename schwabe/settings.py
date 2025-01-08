@@ -46,7 +46,7 @@ LOGGING_CONFIG = {
         "file": {
             'level': "INFO",
             'class': "logging.FileHandler",
-            'filename': "logs/infos.log",
+            'filename': "./schwabe/logs/infos.log",
             'mode': "w",
             'formatter': "verbose"
         },
