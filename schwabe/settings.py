@@ -14,10 +14,11 @@ BASE_DIR = pathlib.Path(__file__).parent
 CMDS_DIR = BASE_DIR / "cmds"
 COGS_DIR = BASE_DIR / "cogs"
 
-# VIDEOCMDS_DIR = BASE_DIR / "videocmds"
+VIDEOCMDS_DIR = BASE_DIR / "videocmds"
 
-# GUILDS_ID = discord.Object(id=int(os.getenv("GUILD")))
-# FEEDBACK_CH = int(os.getenv("FEEDBACK_CH", 0))
+GUILDS_ID = discord.Object(id=int(os.getenv("GUILD")))
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+FEEDBACK_CH = int(os.getenv("FEEDBACK_CH", 0))
 # GUILD_ID_INT = int(os.getenv("GUILD"))
 
 

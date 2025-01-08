@@ -1,1 +1,2 @@
-INFO       - 2025-01-07 16:46:56,336 - client          : logging in using static token
+INFO       - 2025-01-08 17:01:04,351 - client          : logging in using static token
+INFO       - 2025-01-08 17:01:05,317 - gateway         : Shard ID None has connected to Gateway (Session ID: f705c932718cd44b03fc016c861bc441).
