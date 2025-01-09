@@ -80,15 +80,15 @@ class Goal(commands.Cog):
 
         return choices
 
-    @app_commands.command()
-    @app_commands.autocomplete(choice=delete_choices)
-    async def delete_goal(self, interaction: discord.Interaction, choice: int):
+    @app_commands.command(name="delete-goal", description="Delete one of you goals")
+    @app_commands.autocomplete(goal=delete_choices)
+    async def delete_goal(self, interaction: discord.Interaction, goal: int):
         # Connect to SQL database
         connection = sqlite3.connect("./cogs/goals.db")
         cursor = connection.cursor()
 
         # Delete goal via goal_id primary key
-        cursor.execute("DELETE FROM Goals WHERE goal_id = ?", (choice,))
+        cursor.execute("DELETE FROM Goals WHERE goal_id = ?", (goal,))
 
         # Close SQL database connection
         connection.commit()
