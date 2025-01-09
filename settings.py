@@ -18,7 +18,7 @@ VIDEOCMDS_DIR = BASE_DIR / "videocmds"
 
 GUILDS_ID = discord.Object(id=int(os.getenv("GUILD")))
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-FEEDBACK_CH = int(os.getenv("FEEDBACK_CH", 0))
+LOGGER_CH = int(os.getenv("FEEDBACK_CH", 0))
 # GUILD_ID_INT = int(os.getenv("GUILD"))
 
 
@@ -47,7 +47,7 @@ LOGGING_CONFIG = {
         "file": {
             'level': "INFO",
             'class': "logging.FileHandler",
-            'filename': "./schwabe/logs/infos.log",
+            'filename': "./!schwabe/logs/infos.log",
             'mode': "w",
             'formatter': "verbose"
         },
