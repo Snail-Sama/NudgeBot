@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+import typing
 import sqlite3
 import settings
 
@@ -20,8 +21,9 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
         placeholder = "Enter the number in your goal! Ex: the '100' in 100 push-ups"
     )
 
-    """Inserts user information into goals.db
-        user_id, goal_id, target, description, progress"""
+    #Inserts user information into goals.db
+    #user_id, goal_id, target, description, progress
+    #goal_id Primary Key and AUTO-INCREMENT
     def insert_DB(self, user_id : int, target : int, description : str):
         connection = sqlite3.connect("./cogs/goals.db")
         cursor = connection.cursor()
@@ -29,7 +31,7 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
         connection.commit()
         connection.close()
 
-    """Send a confirmation embed containing submitted information"""
+    #Send a confirmation embed containing submitted information
     async def on_submit(self, interaction : discord.Interaction):
         self.insert_DB(interaction.user.id, self.goal_target.value, self.goal_description.value)
 
@@ -41,7 +43,7 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
         embed.set_author(name=interaction.user.name)
         
         await channel.send(embed=embed)
-        await interaction.response.send_message(f"Thank you, {self.user.name}", ephemeral=True)
+        await interaction.response.send_message(f"Thank you, {interaction.user.name}", ephemeral=True)
 
     async def on_error(self, interaction : discord.Interaction, error):
         ...
@@ -50,11 +52,50 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
 """Goal class cog to handle all the goal relate fuctions"""
 class Goal(commands.Cog):
 
-    """Creates a user tied goal in the database"""
-    @app_commands.command()
+    
+    @app_commands.command(name="create-goal", description="Set a new goal!")
     async def set_goal(self, interaction : discord.Interaction):
         goal_modal = GoalModal() 
         await interaction.response.send_modal(goal_modal)
+
+    # Function to fetch all the goal_ids linked with user_id for autocomplete
+    @app_commands.autocomplete(choice='delete_choices')
+    async def delete_choices(self, interaction: discord.Interaction, current: str) -> typing.List[app_commands.Choice[int]]:
+        # Connect to SQL database
+        connection = sqlite3.connect("./cogs/goals.db")
+        cursor = connection.cursor()
+
+        # Fetch goal_ids under a user
+        cursor.execute("SELECT goal_id, description FROM Goals WHERE user_id = ?", (interaction.user.id,))
+        goal_ids = cursor.fetchall()
+
+        # Close SQL database connection
+        connection.close()
+
+        # Create autocomplete choices
+        choices = []
+        for goal_id, description in goal_ids:
+            if current.lower() in description.lower():
+                choices.append(app_commands.Choice(name=description, value=goal_id))
+
+        return choices
+
+    @app_commands.command()
+    @app_commands.autocomplete(choice=delete_choices)
+    async def delete_goal(self, interaction: discord.Interaction, choice: int):
+        # Connect to SQL database
+        connection = sqlite3.connect("./cogs/goals.db")
+        cursor = connection.cursor()
+
+        # Delete goal via goal_id primary key
+        cursor.execute("DELETE FROM Goals WHERE goal_id = ?", (choice,))
+
+        # Close SQL database connection
+        connection.commit()
+        connection.close()
+
+        # Send success message
+        await interaction.response.send_message(f"Successfully deleted goal", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(Goal(bot))
