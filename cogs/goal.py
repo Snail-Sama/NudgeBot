@@ -27,29 +27,38 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
         placeholder = "Enter the number in your goal! Ex: the '100' in 100 push-ups"
     )
 
+    goal_id = None
+
     #Inserts user information into goals.db
     #user_id, goal_id, target, description, progress, title
     #goal_id Primary Key and AUTO-INCREMENT
     def insert_DB(self, user_id : int, target : int, description : str, title : str):
         connection = sqlite3.connect("./cogs/goals.db")
         cursor = connection.cursor()
-        cursor.execute("INSERT INTO Goals (user_id, target, description, progress, title) Values (?,?,?,?,?)", (user_id, target, description, 0, title))
+        if self.goal_id:
+            cursor.execute("UPDATE Goals SET target = ?, description = ?, progress = ?, title = ? WHERE goal_id = ?", (target, description, 0, title, self.goal_id))
+            action = "updated"
+        else:
+            cursor.execute("INSERT INTO Goals (user_id, target, description, progress, title) Values (?,?,?,?,?)", (user_id, target, description, 0, title))
+            action = "created"
+
         connection.commit()
         connection.close()
+        return action
 
     #Send a confirmation embed containing submitted information
     async def on_submit(self, interaction : discord.Interaction):
-        self.insert_DB(interaction.user.id, self.goal_target.value, self.goal_description.value, self.goal_title.value)
+        action = self.insert_DB(interaction.user.id, self.goal_target.value, self.goal_description.value, self.goal_title.value)
 
         channel = interaction.guild.get_channel(settings.LOGGER_CH)
 
-        embed = discord.Embed(title="New Goal Set!",
-                            description=self.goal_title.value,
+        embed = discord.Embed(title=self.goal_title.value,
+                            description=self.goal_description.value,
                               color=discord.Color.yellow())
         embed.set_author(name=interaction.user.name)
         
         await channel.send(embed=embed)
-        await interaction.response.send_message(f"Thank you, {interaction.user.name}", ephemeral=True)
+        await interaction.response.send_message(f"Succesfully {action} goal!", ephemeral=True)
 
     async def on_error(self, interaction : discord.Interaction, error):
         ...
@@ -65,7 +74,6 @@ class Goal(commands.Cog):
         await interaction.response.send_modal(goal_modal)
 
     # Function to fetch all the goal_ids linked with user_id for autocomplete
-    #@app_commands.autocomplete(choice='delete_choices')
     async def goal_choices(self, interaction: discord.Interaction, current: str) -> typing.List[app_commands.Choice[int]]:
         # Connect to SQL database
         connection = sqlite3.connect("./cogs/goals.db")
@@ -88,7 +96,7 @@ class Goal(commands.Cog):
 
     #Commmand to delete a goal
     @app_commands.command(name="delete-goal", description="Delete one of you goals")
-    @app_commands.autocomplete(goal_id=goal_choices)
+    @app_commands.autocomplete(goal=goal_choices)
     async def delete_goal(self, interaction: discord.Interaction, goal: int):
         goal_id = goal
         # Connect to SQL database
@@ -107,7 +115,7 @@ class Goal(commands.Cog):
 
     #Command to log progress towards a goal
     @app_commands.command(name="log", description="log progress towards a goal")
-    @app_commands.autocomplete(goal_id=goal_choices)
+    @app_commands.autocomplete(goal=goal_choices)
     async def log_goal(self, interaction: discord.Interaction, goal: int, entry: int):
         goal_id = goal
         # Connect to SQL database
@@ -165,6 +173,13 @@ class Goal(commands.Cog):
 
         await interaction.response.send_message(f"You have completed {progress} which means you are {percent:.2f}% done!", ephemeral=True)
 
+    #Command to edit a goal's fields
+    @app_commands.command(name="edit-goal", description="Edit a goal you had")
+    @app_commands.autocomplete(goal=goal_choices)
+    async def edit_goal(self, interaction : discord.Interaction, goal: int):
+        goal_modal = GoalModal() 
+        goal_modal.goal_id = goal
+        await interaction.response.send_modal(goal_modal)
 
 async def setup(bot):
     await bot.add_cog(Goal(bot))
