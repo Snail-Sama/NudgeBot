@@ -1,1 +1,61 @@
-INFO       - 2025-01-10 16:54:49,227 - client          : logging in using static token
+INFO       - 2025-01-11 16:02:01,425 - client          : logging in using static token
+INFO       - 2025-01-11 16:02:02,259 - gateway         : Shard ID None has connected to Gateway (Session ID: 49fec5140faad51c41e049f4dad84e8f).
+ERROR      - 2025-01-11 16:08:54,234 - view            : Ignoring exception in view <DropdownView timeout=180.0 children=1> for item <Frequency_Select placeholder='Would you like a reminder?' min_values=1 max_values=1 disabled=True>
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ui\view.py", line 430, in _scheduled_task
+    await item.callback(interaction)
+  File "c:\Projects\NudgeBot\cogs\reminder.py", line 22, in callback
+    await self.view.respond_to_answer(interaction, self.values)
+  File "c:\Projects\NudgeBot\cogs\reminder.py", line 35, in respond_to_answer
+    await interaction.message.edit(view=self)
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\message.py", line 2561, in edit
+    data = await self._state.http.edit_message(self.channel.id, self.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\http.py", line 754, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10008): Unknown Message
+ERROR      - 2025-01-11 16:10:18,446 - view            : Ignoring exception in view <DropdownView timeout=180.0 children=1> for item <Frequency_Select placeholder='Would you like a reminder?' min_values=1 max_values=1 disabled=True>
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ui\view.py", line 430, in _scheduled_task
+    await item.callback(interaction)
+  File "c:\Projects\NudgeBot\cogs\reminder.py", line 22, in callback
+    await self.view.respond_to_answer(interaction, self.values)
+  File "c:\Projects\NudgeBot\cogs\reminder.py", line 35, in respond_to_answer
+    await interaction.message.edit(view=self, ephemeral=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: Message.edit() got an unexpected keyword argument 'ephemeral'
+ERROR      - 2025-01-11 16:10:49,430 - view            : Ignoring exception in view <DropdownView timeout=180.0 children=1> for item <Frequency_Select placeholder='Would you like a reminder?' min_values=1 max_values=1 disabled=True>
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ui\view.py", line 430, in _scheduled_task
+    await item.callback(interaction)
+  File "c:\Projects\NudgeBot\cogs\reminder.py", line 22, in callback
+    await self.view.respond_to_answer(interaction, self.values)
+  File "c:\Projects\NudgeBot\cogs\reminder.py", line 35, in respond_to_answer
+    await interaction.message.edit(view=self)
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\message.py", line 2561, in edit
+    data = await self._state.http.edit_message(self.channel.id, self.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\http.py", line 754, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10008): Unknown Message
+ERROR      - 2025-01-11 16:42:36,313 - view            : Ignoring exception in view <DropdownView timeout=100 children=1> for item <Frequency_Select placeholder='Would you like a reminder?' min_values=1 max_values=1 disabled=False>
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ui\view.py", line 430, in _scheduled_task
+    await item.callback(interaction)
+  File "c:\Projects\NudgeBot\cogs\reminder.py", line 22, in callback
+    Reminder.update_reminder(self.values[0], interaction)
+TypeError: Reminder.update_reminder() missing 1 required positional argument: 'interaction'
+ERROR      - 2025-01-11 17:06:26,858 - view            : Ignoring exception in view <DropdownView timeout=100 children=1> for item <Frequency_Select placeholder='Would you like a reminder?' min_values=1 max_values=1 disabled=True>
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ui\view.py", line 430, in _scheduled_task
+    await item.callback(interaction)
+  File "c:\Projects\NudgeBot\cogs\reminder.py", line 22, in callback
+    await self.view.respond_to_answer(interaction, self.values)
+  File "c:\Projects\NudgeBot\cogs\reminder.py", line 35, in respond_to_answer
+    await interaction.message.edit(view=self)
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\message.py", line 2561, in edit
+    data = await self._state.http.edit_message(self.channel.id, self.id, params=params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\http.py", line 754, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10008): Unknown Message

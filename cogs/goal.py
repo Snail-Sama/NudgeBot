@@ -32,14 +32,14 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
     #Inserts user information into goals.db
     #user_id, goal_id, target, description, progress, title
     #goal_id Primary Key and AUTO-INCREMENT
-    def insert_DB(self, user_id : int, target : int, description : str, title : str):
+    def insert_DB(self, user_id : int, target : int, description : str, title : str, reminder):
         connection = sqlite3.connect("./cogs/goals.db")
         cursor = connection.cursor()
         if self.goal_id:
-            cursor.execute("UPDATE Goals SET target = ?, description = ?, progress = ?, title = ?, reminder = ? WHERE goal_id = ?", (target, description, 0, title, self.goal_id))
+            cursor.execute("UPDATE Goals SET target = ?, description = ?, progress = ?, title = ?, reminder = ? WHERE goal_id = ?", (target, description, 0, title, reminder, self.goal_id))
             action = "updated"
         else:
-            cursor.execute("INSERT INTO Goals (user_id, target, description, progress, title, reminder) Values (?,?,?,?,?)", (user_id, target, description, 0, title))
+            cursor.execute("INSERT INTO Goals (user_id, target, description, progress, title, reminder) Values (?,?,?,?,?,?)", (user_id, target, description, 0, title, reminder))
             action = "created"
 
         connection.commit()
@@ -48,15 +48,14 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
 
     #Send a confirmation embed containing submitted information
     async def on_submit(self, interaction : discord.Interaction):
-        action = self.insert_DB(interaction.user.id, self.goal_target.value, self.goal_description.value, self.goal_title.value)
-
+        action = self.insert_DB(interaction.user.id, self.goal_target.value, self.goal_description.value, self.goal_title.value, "N")
         channel = interaction.guild.get_channel(settings.LOGGER_CH)
 
         embed = discord.Embed(title=self.goal_title.value,
-                            #description=self.goal_description.value + "1D",
+                            description=self.goal_description.value,
                               color=discord.Color.yellow())
         embed.set_author(name=interaction.user.name)
-        
+
         await channel.send(embed=embed)
         await interaction.response.send_message(f"Succesfully {action} goal!", ephemeral=True)
 
@@ -161,8 +160,8 @@ class Goal(commands.Cog):
         cursor = connection.cursor()
 
         # grabs target and progress from SQL database
-        cursor.execute("SELECT target, progress FROM Goals WHERE goal_id = ?", (goal,))
-        target, progress = cursor.fetchone()
+        cursor.execute("SELECT target, progress, reminder FROM Goals WHERE goal_id = ?", (goal,))
+        target, progress, reminder = cursor.fetchone()
 
         # calculates percent based on progress/target
         percent = (progress / target) * 100
@@ -171,7 +170,7 @@ class Goal(commands.Cog):
         connection.commit()
         connection.close()
 
-        await interaction.response.send_message(f"You have completed {progress} which means you are {percent:.2f}% done!", ephemeral=True)
+        await interaction.response.send_message(f"You have completed {progress} which means you are {percent:.2f}% done! Current reminder: {reminder}", ephemeral=True)
 
     #Command to edit a goal's fields
     @app_commands.command(name="edit-goal", description="Edit a goal you had")
