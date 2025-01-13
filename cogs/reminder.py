@@ -5,6 +5,7 @@ from discord import utils
 import settings
 import sqlite3
 from .goal import Goal
+import time
 
 class Frequency_Select(discord.ui.Select):
     def __init__(self):
@@ -37,6 +38,9 @@ class DropdownView(discord.ui.View):
         self.stop()
 
 class Reminder(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
     @app_commands.command(name="set_reminder", description = "Set your reminder!")
     @app_commands.autocomplete(goal=Goal.goal_choices)
     async def set_reminder(self, interaction: discord.Interaction, goal: int):
@@ -69,6 +73,25 @@ class Reminder(commands.Cog):
         connection.close()
 
         await interaction.followup.send(f"Reminder {action} to {reminder} from {old_reminder}", ephemeral=True)
+    
+    @app_commands.command(name="send_reminder", description = "Send your reminder!")
+    @app_commands.autocomplete(goal_id=Goal.goal_choices)
+    async def send_reminder(self, interaction: discord.Interaction, goal_id: int):
+        # Opens connection to database
+        connection = sqlite3.connect("./cogs/goals.db")
+        cursor = connection.cursor()
+
+        # Gets user from goal
+        cursor.execute("SELECT user_id FROM Goals WHERE goal_id = ?", (goal_id,))
+        user_id = cursor.fetchone()
+        user = self.bot.get_user(user_id[0])
+
+        # Gets goal description for reminder
+        cursor.execute("SELECT title FROM Goals WHERE goal_id = ?", (goal_id,))
+        title = cursor.fetchone()
+
+        await interaction.response.send_message(f"{user.mention} Don't forget about your goal: {title[0]}!")
+
 
 
 async def setup(bot):
