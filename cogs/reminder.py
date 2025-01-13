@@ -5,7 +5,9 @@ from discord import utils
 import settings
 import sqlite3
 from .goal import Goal
-import time
+import time, asyncio, schedule, threading
+from datetime import timedelta
+from bot import is_BotMeister
 
 class Frequency_Select(discord.ui.Select):
     def __init__(self):
@@ -40,6 +42,38 @@ class DropdownView(discord.ui.View):
 class Reminder(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.scheduler_thread = threading.Thread(target=self.run_scheduler, daemon=True)
+        self.scheduler_thread.start()
+
+    def run_scheduler(self):
+        # Runs the schedule in a separate thread
+        while True:
+            schedule.run_pending()
+            time.sleep(1)  # Check every second for scheduled task
+    
+    # @app_commands.command(name="send_reminder", description = "Send your reminder!")
+    # @app_commands.autocomplete(goal_id=Goal.goal_choices)
+    async def send_reminder(self, interaction: discord.Interaction, goal_id: int):
+        # Opens connection to database
+        connection = sqlite3.connect("./cogs/goals.db")
+        cursor = connection.cursor()
+        # Gets user, title, and reminder type from goal
+        cursor.execute("SELECT user_id, title, reminder FROM Goals WHERE goal_id = ?", (goal_id,))
+        user_id, title, reminder = cursor.fetchall()[0]
+
+        user = self.bot.get_user(user_id)
+
+        reminder_message = {
+            "2D": "twice daily",
+            "1D": "once daily",
+            "W": "weekly",
+            "M": "monthly",
+        }.get(reminder)
+
+        await interaction.followup.send(f"{user.mention} Don't forget about your goal: {title}! I will remind you {reminder_message} ;)")
+
+    # async def schedule_reminder(self, interaction: discord.Interaction, goal_id: int):
+    #     schedule.every(1).day.do(send_reminder, interaction, goal_id)
 
     @app_commands.command(name="set_reminder", description = "Set your reminder!")
     @app_commands.autocomplete(goal=Goal.goal_choices)
@@ -62,7 +96,7 @@ class Reminder(commands.Cog):
         #Finds old reminder
         cursor.execute("SELECT reminder FROM Goals WHERE goal_id = ?", (goal_id,))
         result = cursor.fetchone()
-        old_reminder = result[0]
+        old_reminder = result[0] if result else None
 
         # Sets new reminder
         cursor.execute("UPDATE Goals SET reminder = ? WHERE goal_id = ?", (reminder, goal_id))
@@ -72,26 +106,33 @@ class Reminder(commands.Cog):
         connection.commit()
         connection.close()
 
+        delay = {
+            "2D": 2 * 24 * 3600,
+            "1D": 1 * 24 * 3600,
+            "W": 7 * 24 * 3600,
+            "M": 30 * 24 * 3600,  # Approximation of a month
+        }.get(reminder)
+
+        if delay is None:
+            await interaction.followup.send("Invalid reminder", ephemeral=True)
+            return
+
+        def schedule_reminder():
+            schedule.every(delay).seconds.do(
+                            lambda: asyncio.run_coroutine_threadsafe(
+                            self.send_reminder(interaction, goal_id), self.bot.loop
+                        )
+            )
+
+        threading.Thread(target=schedule_reminder, daemon=True).start()
+
         await interaction.followup.send(f"Reminder {action} to {reminder} from {old_reminder}", ephemeral=True)
-    
-    @app_commands.command(name="send_reminder", description = "Send your reminder!")
-    @app_commands.autocomplete(goal_id=Goal.goal_choices)
-    async def send_reminder(self, interaction: discord.Interaction, goal_id: int):
-        # Opens connection to database
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
 
-        # Gets user from goal
-        cursor.execute("SELECT user_id FROM Goals WHERE goal_id = ?", (goal_id,))
-        user_id = cursor.fetchone()
-        user = self.bot.get_user(user_id[0])
-
-        # Gets goal description for reminder
-        cursor.execute("SELECT title FROM Goals WHERE goal_id = ?", (goal_id,))
-        title = cursor.fetchone()
-
-        await interaction.response.send_message(f"{user.mention} Don't forget about your goal: {title[0]}!")
-
+    @app_commands.command(name="stop_reminder", description = "STOP!")
+    @is_BotMeister()
+    async def stop_reminder(self, interaction: discord.Interaction):
+        schedule.clear()
+        await interaction.response.send_message("Stopped", ephemeral=True)
 
 
 async def setup(bot):
