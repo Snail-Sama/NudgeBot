@@ -25,7 +25,7 @@ class Frequency_Select(discord.ui.Select):
         await self.view.respond_to_answer(interaction, self.values)
 
 class DropdownView(discord.ui.View):
-    def __init__(self, *, timeout = 100):
+    def __init__(self, *, timeout: int = 100):
         super().__init__(timeout=timeout)
         self.answer = None
         # Adds the options to the view so the dropdown menu is visible
@@ -48,8 +48,9 @@ class Reminder(commands.Cog):
     def run_scheduler(self):
         # Runs the schedule in a separate thread
         while True:
+            print(schedule.get_jobs())
             schedule.run_pending()
-            time.sleep(1)  # Check every second for scheduled task
+            time.sleep(60)  # Check every second for scheduled task
     
     # @app_commands.command(name="send_reminder", description = "Send your reminder!")
     # @app_commands.autocomplete(goal_id=Goal.goal_choices)
@@ -107,7 +108,7 @@ class Reminder(commands.Cog):
         connection.close()
 
         delay = {
-            "2D": 2 * 24 * 3600,
+            "2D": schedule,
             "1D": 1 * 24 * 3600,
             "W": 7 * 24 * 3600,
             "M": 30 * 24 * 3600,  # Approximation of a month
