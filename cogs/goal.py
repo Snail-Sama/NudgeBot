@@ -4,6 +4,7 @@ from discord import app_commands
 import typing
 import sqlite3
 import settings
+import schedule
 
 """class to handle Modals which gather user input"""
 class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
@@ -32,14 +33,18 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
     #Inserts user information into goals.db
     #user_id, goal_id, target, description, progress, title
     #goal_id Primary Key and AUTO-INCREMENT
-    def insert_DB(self, user_id : int, target : int, description : str, title : str, reminder):
+    def insert_DB(self, user_id : int, target : int, description : str, title : str, reminder: str):
         connection = sqlite3.connect("./cogs/goals.db")
         cursor = connection.cursor()
+        print("C")
+        print(self.goal_id)
         if self.goal_id:
+            print("A")
             cursor.execute("UPDATE Goals SET target = ?, description = ?, progress = ?, title = ?, reminder = ? WHERE goal_id = ?", (target, description, 0, title, reminder, self.goal_id))
             action = "updated"
         else:
-            cursor.execute("INSERT INTO Goals (user_id, target, description, progress, title, reminder) Values (?,?,?,?,?,?)", (user_id, target, description, 0, title, reminder))
+            print("B")
+            cursor.execute("INSERT INTO Goals (user_id, target, description, progress, title, reminder, job) Values (?,?,?,?,?,?,?)", (user_id, target, description, 0, title, reminder, None))
             action = "created"
 
         connection.commit()
@@ -48,6 +53,7 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
 
     #Send a confirmation embed containing submitted information
     async def on_submit(self, interaction : discord.Interaction):
+        print("D")
         action = self.insert_DB(interaction.user.id, self.goal_target.value, self.goal_description.value, self.goal_title.value, "N")
         channel = interaction.guild.get_channel(settings.LOGGER_CH)
 
