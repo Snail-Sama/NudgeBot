@@ -6,7 +6,7 @@ import settings
 import sqlite3
 from .goal import Goal
 import time, asyncio, schedule, threading
-from datetime import timedelta
+import datetime
 from bot import is_BotMeister
 
 class Frequency_Select(discord.ui.Select):
@@ -48,7 +48,7 @@ class Reminder(commands.Cog):
     def run_scheduler(self):
         # Runs the schedule in a separate thread
         while True:
-            print(schedule.get_jobs())
+            # print(schedule.get_jobs())
             schedule.run_pending()
             time.sleep(60)  # Check every second for scheduled task
     
@@ -71,8 +71,11 @@ class Reminder(commands.Cog):
             "M": "monthly",
         }.get(reminder)
 
-        await interaction.followup.send(f"{user.mention} Don't forget about your goal: {title}! I will remind you {reminder_message} ;)")
-
+        channel = interaction.guild.get_channel(settings.LOGGER_CH)
+        
+        await channel.send(f"{user.mention} Don't forget about your goal: {title}! I will remind you {reminder_message} ;)")
+    
+    
     # async def schedule_reminder(self, interaction: discord.Interaction, goal_id: int):
     #     schedule.every(1).day.do(send_reminder, interaction, goal_id)
 
@@ -107,23 +110,52 @@ class Reminder(commands.Cog):
         connection.commit()
         connection.close()
 
-        delay = {
-            "2D": schedule,
-            "1D": 1 * 24 * 3600,
-            "W": 7 * 24 * 3600,
-            "M": 30 * 24 * 3600,  # Approximation of a month
-        }.get(reminder)
+        # delay = {
+        #     "2D": schedule,
+        #     "1D": 1 * 24 * 3600,
+        #     "W": 7 * 24 * 3600,
+        #     "M": 30 * 24 * 3600,  # Approximation of a month
+        # }.get(reminder)
 
-        if delay is None:
-            await interaction.followup.send("Invalid reminder", ephemeral=True)
-            return
+        # if delay is None:
+        #     await interaction.followup.send("Invalid reminder", ephemeral=True)
+        #     return
 
         def schedule_reminder():
-            schedule.every(delay).seconds.do(
-                            lambda: asyncio.run_coroutine_threadsafe(
+            def send_monthly():
+                if datetime.datetime.today().day == 17:
+                    asyncio.run_coroutine_threadsafe(
+                        self.send_reminder(interaction, goal_id), self.bot.loop
+                    )
+                else:
+                    None
+
+            match reminder:
+                case "2D":
+                    schedule.every().day.at("08:00").do(
+                        lambda: asyncio.run_coroutine_threadsafe(
                             self.send_reminder(interaction, goal_id), self.bot.loop
-                        )
-            )
+                        ))
+                    schedule.every().day.at("20:00").do(
+                        lambda: asyncio.run_coroutine_threadsafe(
+                            self.send_reminder(interaction, goal_id), self.bot.loop
+                        ))
+                case "1D":
+                    schedule.every().day.at("16:00").do(
+                        lambda: asyncio.run_coroutine_threadsafe(
+                            self.send_reminder(interaction, goal_id), self.bot.loop
+                        ))
+                case "W":
+                    schedule.every().monday.at("08:00").do(
+                        lambda: asyncio.run_coroutine_threadsafe(
+                            self.send_reminder(interaction, goal_id), self.bot.loop
+                        ))
+                case "M":
+                    schedule.every().day.at("08:00").do(send_monthly)
+                case "N":
+                    pass
+                case _:
+                    raise Exception("Reminder Invalid")
 
         threading.Thread(target=schedule_reminder, daemon=True).start()
 
