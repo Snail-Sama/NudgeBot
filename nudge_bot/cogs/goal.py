@@ -5,6 +5,7 @@ import typing
 import sqlite3
 import settings, logging
 import schedule
+
 from sqlalchemy import Text
 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -73,7 +74,7 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
 
 
 
-class Goal(commands.Cog, db.Model):
+class Goal(db.Model): # Goal(commands.Cog, db.Model):
     """Represents a user created goal
 
     This model maps to the 'goals' table and stores metadata for desired target areas.
@@ -132,7 +133,8 @@ class Goal(commands.Cog, db.Model):
     #Inserts user information into goals.db
     #user_id, goal_id, target, description, progress, title
     #goal_id Primary Key and AUTO-INCREMENT. look at db_init.sql for this now
-    def create_goal(self, user_id : int, title : str, description : str, target : int, reminder: str) -> str:
+    @classmethod
+    def create_goal(cls, user_id : int, title : str, description : str, target : int, reminder: str) -> str:
         """Insert a new goal into the DB
 
         Args:
@@ -161,6 +163,7 @@ class Goal(commands.Cog, db.Model):
                 title = title,
                 description = description,
                 target = target,
+                progress = 0,
                 reminder = reminder
             )
             goal.validate()

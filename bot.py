@@ -15,6 +15,9 @@ def is_BotMeister():
             return True
     return app_commands.check(predicate)
 
+
+def create_bot():
+    
 def run():
     intents = discord.Intents.all()
     bot = commands.Bot(command_prefix=".", intents = intents)

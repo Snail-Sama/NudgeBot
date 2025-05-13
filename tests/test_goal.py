@@ -57,20 +57,20 @@ def test_create_goal(session):
 def test_create_goal_duplicate():
     """Test creating a duplicate goal."""
     with pytest.raises(ValueError, match=f"Goal 'Bicep Curls' - '35' already exists."):
-        Goal.create_goal(title = "Bicep Curls", description = "Do 35lbs bicep curls", target = 35, reminder = "W")
+        Goal.create_goal(user_id=1, title="Bicep Curls", description="Do 35lbs bicep curls", target=35, reminder="W")
 
 
-@pytest.mark.parametrize("target, goal_value, goal_progress, completed", [
-    ("", 10, 0.0, False),
-    ("shoulders", None, 0.0, False),
-    ("core", 20, "high", False),
-    ("arms", 15, 2.0, "yes"),
+@pytest.mark.parametrize("title, description, target, reminder", [
+    ("", "empty title", 10, "N"),
+    ("Non-string description", 0, 15, "W"),
+    ("Target", "Incorrect target type", "twenty reps", "D"),
+    ("Reminder", "Incorrect reminder type", 50, 25),
 ])
 
-def test_create_goal_invalid_data(target, goal_value, goal_progress, completed):
+def test_create_goal_invalid_data(title, description, target, reminder):
     """Test validation errors during goal creation."""
     with pytest.raises(ValueError):
-        Goals.create_goal(target, goal_value, goal_progress, completed)
+        Goal.create_goal(user_id=1, title=title, description=description, target=target, reminder=reminder)
 
 
 # # --- Get Goal ---
