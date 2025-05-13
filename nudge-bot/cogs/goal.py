@@ -33,17 +33,37 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
     #Inserts user information into goals.db
     #user_id, goal_id, target, description, progress, title
     #goal_id Primary Key and AUTO-INCREMENT
-    def insert_DB(self, user_id : int, target : int, description : str, title : str, reminder: str):
+    def insert_DB(self, user_id : int, target : int, description : str, title : str, reminder: str) -> str:
+        """Insert a new goal into the DB
+
+        Args:
+            user_id: The id of the user who made the request.
+            target: Value the user is trying to reach with their goal.
+            description: Description of the user's goal.
+            title: Short title of the goal.
+            reminder: Frequency of the reminders the user wants to receive.
+
+        Returns:
+            String describing the action done on the database.
+
+        Raises:
+        
+        TODO:
+            Add a try except statement for a sql error
+            Add logging
+            Move to sql utils? check if already exists
+
+        """
         connection = sqlite3.connect("./cogs/goals.db")
         cursor = connection.cursor()
-        print("C")
+        # print("C")
         print(self.goal_id)
         if self.goal_id:
-            print("A")
+            # print("A")
             cursor.execute("UPDATE Goals SET target = ?, description = ?, progress = ?, title = ?, reminder = ? WHERE goal_id = ?", (target, description, 0, title, reminder, self.goal_id))
             action = "updated"
         else:
-            print("B")
+            # print("B")
             cursor.execute("INSERT INTO Goals (user_id, target, description, progress, title, reminder, job) Values (?,?,?,?,?,?,?)", (user_id, target, description, 0, title, reminder, None))
             action = "created"
 
@@ -53,12 +73,28 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
 
     #Send a confirmation embed containing submitted information
     async def on_submit(self, interaction : discord.Interaction):
-        print("D")
+        """Asynchronous method for when users submit their goal information in thte modal.
+
+        Args:
+            interaction: The discord interaction of the user's request.
+
+        Awaits:
+            Sending a message in the corresponding channel.
+
+        Raises:
+        
+        TODO:
+            Add a try except statement for a sql error
+            Add logging
+            Move to sql utils? check if already exists
+
+        """
+        # print("D")
         action = self.insert_DB(interaction.user.id, self.goal_target.value, self.goal_description.value, self.goal_title.value, "N")
         channel = interaction.guild.get_channel(settings.LOGGER_CH)
 
         embed = discord.Embed(title=self.goal_title.value,
-                            description=self.goal_description.value,
+                              description=self.goal_description.value,
                               color=discord.Color.yellow())
         embed.set_author(name=interaction.user.name)
 
