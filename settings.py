@@ -12,7 +12,7 @@ DISCORD_API_SECRET = os.getenv("DISCORD_API_TOKEN")
 BASE_DIR = pathlib.Path(__file__).parent
 
 CMDS_DIR = BASE_DIR / "cmds"
-COGS_DIR = BASE_DIR / "cogs"
+COGS_DIR = BASE_DIR / "nudge_bot/cogs"
 
 VIDEOCMDS_DIR = BASE_DIR / "videocmds"
 

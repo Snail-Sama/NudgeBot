@@ -4,6 +4,8 @@ from discord import app_commands
 import typing
 import settings
 
+from nudge_bot import cogs
+
 logger = settings.logging.getLogger("bot")
 
 def is_BotMeister():
@@ -23,7 +25,7 @@ def run():
 
         for cogs_file in settings.COGS_DIR.glob("*.py"):
             if cogs_file.name != "__init__.py":
-                await bot.load_extension(f"cogs.{cogs_file.name[:-3]}")
+                await bot.load_extension(f"nudge_bot.cogs.{cogs_file.name[:-3]}")
         
         bot.tree.copy_global_to(guild=settings.GUILDS_ID)
         await bot.tree.sync(guild=settings.GUILDS_ID)
@@ -33,7 +35,7 @@ def run():
         data = []
         for cog in cogs:
             if current.lower() in cog.stem:
-                data.append(app_commands.Choice(name=cog.stem, value=cog.stem))
+                data.append(cog.stem) # data.append(app_commands.Choice(name=cog.stem, value=cog.stem))
         return data
     
     @bot.tree.command()
