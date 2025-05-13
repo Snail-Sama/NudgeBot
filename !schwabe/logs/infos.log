@@ -1,2 +1,87 @@
-INFO       - 2025-01-17 15:26:49,132 - client          : logging in using static token
-INFO       - 2025-01-17 15:26:50,187 - gateway         : Shard ID None has connected to Gateway (Session ID: e7482eb957d3c119a78a17d5192d3f94).
+INFO       - 2025-05-11 21:12:53,534 - client          : logging in using static token
+INFO       - 2025-05-11 21:12:54,631 - gateway         : Shard ID None has connected to Gateway (Session ID: 14c012bc29f84504cca5170a1b5dd0d2).
+WARNING    - 2025-05-11 22:22:19,941 - gateway         : Shard ID None has stopped responding to the gateway. Closing and restarting.
+INFO       - 2025-05-11 22:22:20,213 - gateway         : Shard ID None session has been invalidated.
+INFO       - 2025-05-11 22:22:25,572 - gateway         : Shard ID None has connected to Gateway (Session ID: 837a0df5ea2358d854372fc2fae70b55).
+ERROR      - 2025-05-11 22:22:27,604 - client          : Ignoring exception in on_ready
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\client.py", line 449, in _run_event
+    await coro(*args, **kwargs)
+  File "c:\Projects\NudgeBot\bot.py", line 26, in on_ready
+    await bot.load_extension(f"cogs.{cogs_file.name[:-3]}")
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ext\commands\bot.py", line 1023, in load_extension
+    raise errors.ExtensionAlreadyLoaded(name)
+discord.ext.commands.errors.ExtensionAlreadyLoaded: Extension 'cogs.goal' is already loaded.
+WARNING    - 2025-05-12 05:00:53,534 - gateway         : Shard ID None has stopped responding to the gateway. Closing and restarting.
+INFO       - 2025-05-12 05:00:53,768 - gateway         : Shard ID None session has been invalidated.
+INFO       - 2025-05-12 05:00:59,127 - gateway         : Shard ID None has connected to Gateway (Session ID: b4996050e9771b82d7fcc7f0f1fb7743).
+ERROR      - 2025-05-12 05:01:01,169 - client          : Ignoring exception in on_ready
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\client.py", line 449, in _run_event
+    await coro(*args, **kwargs)
+  File "c:\Projects\NudgeBot\bot.py", line 26, in on_ready
+    await bot.load_extension(f"cogs.{cogs_file.name[:-3]}")
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ext\commands\bot.py", line 1023, in load_extension
+    raise errors.ExtensionAlreadyLoaded(name)
+discord.ext.commands.errors.ExtensionAlreadyLoaded: Extension 'cogs.goal' is already loaded.
+WARNING    - 2025-05-12 08:47:42,672 - gateway         : Shard ID None has stopped responding to the gateway. Closing and restarting.
+INFO       - 2025-05-12 08:47:42,876 - gateway         : Shard ID None session has been invalidated.
+INFO       - 2025-05-12 08:47:48,254 - gateway         : Shard ID None has connected to Gateway (Session ID: 8261ee5edbb0b98b54c7c2c579feae51).
+ERROR      - 2025-05-12 08:47:50,262 - client          : Ignoring exception in on_ready
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\client.py", line 449, in _run_event
+    await coro(*args, **kwargs)
+  File "c:\Projects\NudgeBot\bot.py", line 26, in on_ready
+    await bot.load_extension(f"cogs.{cogs_file.name[:-3]}")
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ext\commands\bot.py", line 1023, in load_extension
+    raise errors.ExtensionAlreadyLoaded(name)
+discord.ext.commands.errors.ExtensionAlreadyLoaded: Extension 'cogs.goal' is already loaded.
+INFO       - 2025-05-12 08:57:11,773 - gateway         : Shard ID None has successfully RESUMED session 8261ee5edbb0b98b54c7c2c579feae51.
+WARNING    - 2025-05-12 10:57:56,522 - gateway         : Shard ID None has stopped responding to the gateway. Closing and restarting.
+INFO       - 2025-05-12 10:57:56,760 - gateway         : Shard ID None session has been invalidated.
+INFO       - 2025-05-12 10:58:02,159 - gateway         : Shard ID None has connected to Gateway (Session ID: b534a6b6e1d6eb5a521296bec4629e9c).
+ERROR      - 2025-05-12 10:58:04,181 - client          : Ignoring exception in on_ready
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\client.py", line 449, in _run_event
+    await coro(*args, **kwargs)
+  File "c:\Projects\NudgeBot\bot.py", line 26, in on_ready
+    await bot.load_extension(f"cogs.{cogs_file.name[:-3]}")
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ext\commands\bot.py", line 1023, in load_extension
+    raise errors.ExtensionAlreadyLoaded(name)
+discord.ext.commands.errors.ExtensionAlreadyLoaded: Extension 'cogs.goal' is already loaded.
+WARNING    - 2025-05-12 13:00:27,984 - gateway         : Shard ID None has stopped responding to the gateway. Closing and restarting.
+INFO       - 2025-05-12 13:00:28,763 - gateway         : Shard ID None session has been invalidated.
+INFO       - 2025-05-12 13:00:34,321 - gateway         : Shard ID None has connected to Gateway (Session ID: 836fc2b72931596f86323b5822706921).
+ERROR      - 2025-05-12 13:00:36,375 - client          : Ignoring exception in on_ready
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\client.py", line 449, in _run_event
+    await coro(*args, **kwargs)
+  File "c:\Projects\NudgeBot\bot.py", line 26, in on_ready
+    await bot.load_extension(f"cogs.{cogs_file.name[:-3]}")
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ext\commands\bot.py", line 1023, in load_extension
+    raise errors.ExtensionAlreadyLoaded(name)
+discord.ext.commands.errors.ExtensionAlreadyLoaded: Extension 'cogs.goal' is already loaded.
+WARNING    - 2025-05-12 19:00:59,850 - gateway         : Shard ID None has stopped responding to the gateway. Closing and restarting.
+INFO       - 2025-05-12 19:01:00,578 - gateway         : Shard ID None session has been invalidated.
+INFO       - 2025-05-12 19:01:05,980 - gateway         : Shard ID None has connected to Gateway (Session ID: 81d93d9ce4164b6c93b3605c6cd8dd21).
+ERROR      - 2025-05-12 19:01:07,988 - client          : Ignoring exception in on_ready
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\client.py", line 449, in _run_event
+    await coro(*args, **kwargs)
+  File "c:\Projects\NudgeBot\bot.py", line 26, in on_ready
+    await bot.load_extension(f"cogs.{cogs_file.name[:-3]}")
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ext\commands\bot.py", line 1023, in load_extension
+    raise errors.ExtensionAlreadyLoaded(name)
+discord.ext.commands.errors.ExtensionAlreadyLoaded: Extension 'cogs.goal' is already loaded.
+WARNING    - 2025-05-12 20:06:59,678 - gateway         : Shard ID None has stopped responding to the gateway. Closing and restarting.
+INFO       - 2025-05-12 20:07:00,271 - gateway         : Shard ID None session has been invalidated.
+INFO       - 2025-05-12 20:07:05,750 - gateway         : Shard ID None has connected to Gateway (Session ID: e2265171ae67773c1b2f2b39c7e817ab).
+ERROR      - 2025-05-12 20:07:07,772 - client          : Ignoring exception in on_ready
+Traceback (most recent call last):
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\client.py", line 449, in _run_event
+    await coro(*args, **kwargs)
+  File "c:\Projects\NudgeBot\bot.py", line 26, in on_ready
+    await bot.load_extension(f"cogs.{cogs_file.name[:-3]}")
+  File "C:\Users\asmeu\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\discord\ext\commands\bot.py", line 1023, in load_extension
+    raise errors.ExtensionAlreadyLoaded(name)
+discord.ext.commands.errors.ExtensionAlreadyLoaded: Extension 'cogs.goal' is already loaded.
