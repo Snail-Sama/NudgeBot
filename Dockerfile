@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.9-slim
+FROM python:3.12.3-slim
 
 # Set the working directory in the container
 WORKDIR /app
@@ -26,4 +26,4 @@ VOLUME ["/app/db"]
 EXPOSE 5000
 
 # Run the entrypoint script when the container launches
-CMD ["python", "app.py"]
+CMD ["python", "bot.py"]
