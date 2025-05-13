@@ -41,20 +41,11 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
     goal_id = None
 
     async def on_submit(self, interaction : discord.Interaction) -> str:
-        """Asynchronous method for when users submit their goal information in the modal.
+        """Asynchronous method for when users submit their goal information in the modal. 
+        Sends an embed with basic information about the goal in the interaction channel and a confirmation message upon completion.
 
         Args:
             interaction: The discord interaction of the user's request.
-
-        Returns:
-            The channel in which the action was done.
-
-        Raises:
-        
-        TODO:
-            Add a try except statement for a sql error
-            Add logging
-            Move to sql utils? check if already exists
 
         """
         logger.info(f"User submitted modal.")
@@ -66,6 +57,7 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
                               color=discord.Color.yellow())
         embed.set_author(name=interaction.user.name)
 
+        logger.info("Sending embed and response.")
         await channel.send(embed=embed)
         await interaction.response.send_message(f"Succesfully {action} goal!", ephemeral=True)
 
@@ -78,7 +70,6 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
     """Class for describing the Cog relating to any goal commands.
     
     """
-    # Function to fetch all the goal_ids linked with user_id for autocomplete
     async def goal_choices(self, interaction: discord.Interaction, current: str) -> typing.List[app_commands.Choice[int]]:
         """Fetches all goal IDs linked with user ID for autocopmlete.
 
@@ -88,6 +79,9 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
 
         Returns:
             choices: The list of choices the user has that are autocompleted from the current string.
+
+        TODO: 
+            implement ORM here
 
         """
         # Connect to SQL database
@@ -126,7 +120,7 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
     #Commmand to delete a goal
     @app_commands.command(name="delete-goal", description="Delete one of you goals")
     @app_commands.autocomplete(goal=goal_choices)
-    async def delete_goal(self, interaction: discord.Interaction, goal: int):
+    async def delete_goal(self, interaction: discord.Interaction, goal_id: int):
         """User deletes a goal using command .delete-goal and sends confirmation upon completion
 
         Args: 
@@ -135,26 +129,17 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
         Raises:
             TODO implement error where if there does not exist a goal following their request
         
-        TODO add logging
-        TODO call a Goals function instead for high cohesion
+        TODO:
+            add logging
+            call a Goals function instead for high cohesion (use ORM)
 
         """
-        goal_id = goal
-        # Connect to SQL database
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
+        logger.info(f"Received request to delete a goal.")
+        Goal.delete_goal(goal_id)
 
-        # Delete goal via goal_id primary key
-        cursor.execute("DELETE FROM Goals WHERE goal_id = ?", (goal_id,))
-
-        # Close SQL database connection
-        connection.commit()
-        connection.close()
-
-        # Send success message
         await interaction.response.send_message(f"Successfully deleted goal", ephemeral=True)
 
-    #Command to log progress towards a goal
+
     @app_commands.command(name="log", description="log progress towards a goal")
     @app_commands.autocomplete(goal=goal_choices)
     async def log_goal(self, interaction: discord.Interaction, goal_id: int, entry: int):
@@ -167,50 +152,29 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
 
         Raises:
             TODO implement error when the goal does not exist
-            implement error for any other sql error
-
-        TODO add logging
-        TODO call a Goals function instead for high cohesion
+            TODO implement error for any other sql error
 
         """
-        # Connect to SQL database
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
+        logger.info(f"Received request to log progress to a goal...")
 
-        # Grab the target and progress values
-        cursor.execute("SELECT target, description, progress, title FROM Goals WHERE goal_id = ?", (goal_id,))
-        target, description, goal_progress, title = cursor.fetchone()
+        (completed, title, description) = Goal.log_goal(goal_id, entry)
 
-        #adds entry to what was already there
-        goal_progress += entry
-
-        #check if progress has reached target
-        if goal_progress >= target:
-            #reset progress
-            goal_progress = 0
-            
-            #create and send completion embed
+        #create and send completion embed
+        if completed:
             channel = interaction.guild.get_channel(settings.LOGGER_CH)
             embed = discord.Embed(title=f"Completed {title}",
-                            description=description,
-                              color=discord.Color.brand_green())
+                                description=description,
+                                color=discord.Color.brand_green())
             embed.set_author(name=interaction.user.name)
             await channel.send(embed=embed)
         
-        #update progress in SQL database
-        cursor.execute("UPDATE Goals SET progress = ? WHERE goal_id = ?", (goal_progress, goal_id))
-
-        # Close SQL database connection
-        connection.commit()
-        connection.close()
-
-        # Send success message
+        
         await interaction.response.send_message(f"Successfully logged {entry} to your progress", ephemeral=True)
 
-    #Command to check current progress towards a goal
+
     @app_commands.command(name="check-progress", description="Check your current progress towards completing a goal")
     @app_commands.autocomplete(goal=goal_choices)
-    async def check_goal_progress(self, interaction : discord.Interaction, goal_id: int):
+    async def check_progress(self, interaction : discord.Interaction, goal_id: int):
         """User can check progress towards a specific goal and will send a message with the corresponding data.
 
         Args:
@@ -220,25 +184,11 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
         Raises:
             TODO implement error when the goal does not exist
             implement error for any other sql error
-
-        TODO add logging
-        TODO call a Goals function instead for high cohesion
         
         """
-        # Connect to SQL database
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
+        logger.info(f"Received request to check progress of a goal...")
 
-        # grabs target and progress from SQL database
-        cursor.execute("SELECT target, progress, reminder FROM Goals WHERE goal_id = ?", (goal_id,))
-        target, progress, reminder = cursor.fetchone()
-
-        # calculates percent based on progress/target
-        percent = (progress / target) * 100
-
-        # Close SQL database connection
-        connection.commit()
-        connection.close()
+        (progress, percent, reminder) = Goal.check_progress(goal_id)
 
         await interaction.response.send_message(f"You have completed {progress} which means you are {percent:.2f}% done! Current reminder: {reminder}", ephemeral=True)
 
@@ -256,12 +206,12 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
             TODO implement error when the goal does not exist
             implement error for any other sql error
 
-        TODO add logging
-        TODO call a Goals function instead for high cohesion
+        TODO call a Goals function instead for high cohesion? Can i do this here?
         TODO make sure that this actually overrides and doesn't just create a new goal on submit
         TODO have previous fields as transparent in the background of modal fields
         
         """
+        logger.info("Received request to edit goal...")
         goal_modal = GoalModal() 
         goal_modal.goal_id = goal
         await interaction.response.send_modal(goal_modal)
@@ -390,6 +340,123 @@ class Goal(db.Model):
         # connection.commit()
         # connection.close()
         # return action
+    
+    
+    @classmethod
+    def delete_goal(cls, goal_id: int):
+        """Deletes a goal from the database.
+
+        Args:
+            goal_id: ID of the goal to be deleted.
+
+        Raises:
+            TODO implement error for goal not found.
+        
+        TODO:
+            implement orm
+        """
+        logger.info(f"Deleting goal {goal_id}...")
+
+        # Connect to SQL database
+        connection = sqlite3.connect("./cogs/goals.db")
+        cursor = connection.cursor()
+
+        # Delete goal via goal_id primary key
+        cursor.execute("DELETE FROM Goals WHERE goal_id = ?", (goal_id,))
+
+        # Close SQL database connection
+        connection.commit()
+        connection.close()
+
+        logger.info(f"Successfully deleted goal {goal_id}")
+
+
+    @classmethod
+    def log_goal(cls, goal_id: int, entry: int) -> tuple[bool, str, str]:
+        """Logs progress towards a goal in the database.
+
+        Args:
+            goal_id: ID of the goal to add progress to.
+            entry: Amount to add to progress.
+
+        Returns:
+            True if goal has been completed, False if goal has not been completed.
+            Title and description of goal.
+
+        Raises:
+            TODO implement sql errors
+
+        TODO:
+            implement orm
+        
+        """
+        logger.info(f"Logging progress {entry} to goal {goal_id}...")
+
+        # Connect to SQL database
+        connection = sqlite3.connect("./cogs/goals.db")
+        cursor = connection.cursor()
+
+        # Grab the target and progress values
+        cursor.execute("SELECT target, description, progress, title FROM Goals WHERE goal_id = ?", (goal_id,))
+        target, description, goal_progress, title = cursor.fetchone()
+
+        #adds entry to what was already there
+        goal_progress += entry
+
+        #check if progress has reached target
+        if goal_progress >= target:
+            #reset progress
+            completed = True
+            goal_progress = 0
+        else:
+            completed = False
+        
+        #update progress in SQL database
+        cursor.execute("UPDATE Goals SET progress = ? WHERE goal_id = ?", (goal_progress, goal_id))
+
+        # Close SQL database connection
+        connection.commit()
+        connection.close()
+
+        logger.info(f"Successfully logged progress towards goal {goal_id}")
+        return (completed, title, description)
+    
+    @classmethod
+    def check_progress(cls, goal_id: int) -> tuple[int, float, str]:
+        """Check progress of a goal in the database.
+
+        Args:
+            goal_id: ID of goal to check progress.
+
+        Returns:
+            Progress and percent completed of goal. Current reminder setting (could change this for reminder cog). 
+        
+        Raises:
+            TODO implement sql errors
+
+        TODO:
+            ORM
+
+        """
+        logger.info(f"Checking progress of goal {goal_id}...")
+
+        # Connect to SQL database
+        connection = sqlite3.connect("./cogs/goals.db")
+        cursor = connection.cursor()
+
+        # grabs target and progress from SQL database
+        cursor.execute("SELECT target, progress, reminder FROM Goals WHERE goal_id = ?", (goal_id,))
+        target, progress, reminder = cursor.fetchone()
+
+        # calculates percent based on progress/target
+        percent = (progress / target) * 100
+
+        # Close SQL database connection
+        connection.commit()
+        connection.close()
+
+        logger.info(f"Successfully retreived progress of goal {goal_id}")
+        return (progress, percent, reminder)
 
 async def setup(bot):
     await bot.add_cog(Goal(bot))
