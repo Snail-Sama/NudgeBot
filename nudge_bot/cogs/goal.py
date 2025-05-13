@@ -74,7 +74,7 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
 
 
 
-class Goal(db.Model): # Goal(commands.Cog, db.Model):
+class Goal(commands.Cog): # Goal(commands.Cog, db.Model):
     """Represents a user created goal
 
     This model maps to the 'goals' table and stores metadata for desired target areas.
@@ -103,15 +103,24 @@ class Goal(db.Model): # Goal(commands.Cog, db.Model):
         """
         logger.info(f"Validating goal.")
         if not self.title or not isinstance(self.title, str):
+            logger.error(f"Title must be a non-empty string. Not {self.title}.")
             raise ValueError("Title must be a non-empty string.")
-        if not isinstance(self.description, str):
+        else:
+            logger.info("else")
+        logger.info("does it make it here?")
+        if self.description and not isinstance(self.description, str):
+            logger.error(f"Goal description must be a string. Not {self.description}.")
             raise ValueError("Goal description must be a string.")
         if self.target is None or not isinstance(self.target, int) or self.target < 0:
+            logger.error(f"Target an integer at least 0. Not {self.target}.")
             raise ValueError("Target an integer at least 0.")
         if self.progress is None or not isinstance(self.progress, int) or self.progress < 0:
+            logger.error(f"Progress an integer at least 0. Not {self.progress}.")
             raise ValueError("Progress an integer at least 0.")
         if not self.reminder or not isinstance(self.reminder, str):
+            logger.error(f"Reminder must be a non-empty string. Not {self.reminder}.")
             raise ValueError("Reminder must be a non-empty string.")
+        logger.info(f"Valid goal.")
 
 
     @app_commands.command(name="create-goal", description="Set a new goal!")
@@ -166,14 +175,17 @@ class Goal(db.Model): # Goal(commands.Cog, db.Model):
                 progress = 0,
                 reminder = reminder
             )
-            goal.validate()
+            # goal.validate()
         except ValueError as e:
             logger.warning(f"Validation failed: {e}")
             raise
 
         try:
-            # Check for existing goal with same compound key (title, target)
-            existing = Goal.query.filter_by(title=title.strip(), target=target).first()
+            title=title.strip()
+            logger.info(title)
+            logger.info(f"Check for existing goal with same compound key (title, target): ({title}, {target})")
+            existing = Goal.query.filter_by(title, target=target).first()
+            logger.info(existing)
             if existing:
                 logger.error(f"Goal {title} - {target} already exists.")
                 raise ValueError(f"Goal '{title}' - '{target}' already exists.")

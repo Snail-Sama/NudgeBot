@@ -33,10 +33,15 @@ def run():
         logger.info(f"User: {bot.user} (ID: {bot.user.id})")
 
         logger.info(f"Loading cogs...")
-        for cogs_file in settings.COGS_DIR.glob("*.py"):
-            if cogs_file.name != "__init__.py":
-                await bot.load_extension(f"nudge_bot.cogs.{cogs_file.name[:-3]}")
+        try:
+            for cogs_file in settings.COGS_DIR.glob("*.py"):
+                if cogs_file.name != "__init__.py":
+                    await bot.load_extension(f"nudge_bot.cogs.{cogs_file.name[:-3]}")
+        except ValueError as e:
+            logger.warning(f"Cogs failed to load: {e}")
+            raise
         
+        logger.info(f"Cogs successfully loaded!")
         bot.tree.copy_global_to(guild=settings.GUILDS_ID)
         await bot.tree.sync(guild=settings.GUILDS_ID)
 
