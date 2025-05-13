@@ -4,6 +4,8 @@ from discord import app_commands
 import typing
 import settings
 
+from nudge_bot import cogs
+
 logger = settings.logging.getLogger("bot")
 
 def is_BotMeister():
