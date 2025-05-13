@@ -3,11 +3,20 @@ from discord.ext import commands
 from discord import app_commands
 import typing
 import sqlite3
-import settings
+import settings, logging
 import schedule
+from sqlalchemy import Text
 
-"""class to handle Modals which gather user input"""
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
+from nudge_bot.db import db
+from nudge_bot.utils.logger import configure_logger
+
+logger = logging.getLogger(__name__)
+configure_logger(logger)
+
 class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
+    """Modal for the user to submit their goal."""
     goal_title = discord.ui.TextInput(
         style = discord.TextStyle.short,
         label = "Title",
@@ -30,10 +39,100 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
 
     goal_id = None
 
+    async def on_submit(self, interaction : discord.Interaction) -> str:
+        """Asynchronous method for when users submit their goal information in the modal.
+
+        Args:
+            interaction: The discord interaction of the user's request.
+
+        Returns:
+            The channel in which the action was done.
+
+        Raises:
+        
+        TODO:
+            Add a try except statement for a sql error
+            Add logging
+            Move to sql utils? check if already exists
+
+        """
+        logger.info(f"User submitted modal.")
+        action = Goal.create_goal(interaction.user.id, self.goal_title.value, self.goal_description.value, self.goal_target.value, "N")
+        channel = interaction.guild.get_channel(settings.LOGGER_CH)
+
+        embed = discord.Embed(title=self.goal_title.value,
+                              description=self.goal_description.value,
+                              color=discord.Color.yellow())
+        embed.set_author(name=interaction.user.name)
+
+        await channel.send(embed=embed)
+        await interaction.response.send_message(f"Succesfully {action} goal!", ephemeral=True)
+
+    async def on_error(self, interaction : discord.Interaction, error):
+        ...
+
+
+
+class Goal(commands.Cog, db.Model):
+    """Represents a user created goal
+
+    This model maps to the 'goals' table and stores metadata for desired target areas.
+
+    Used in a Flask-SQLAlchemy application for user interaction and data-driven goal operations.
+    """
+
+    __tablename__ = "Goals"
+
+    goal_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String, nullable=False)
+    description = db.Column(db.String, nullable=True)
+    target = db.Column(db.Integer, nullable=False)
+    progress = db.Column(db.Integer, nullable=True, default=0)
+    reminder = db.Column(db.String, nullable=True, default='N')
+
+    def validate(self) -> None:
+        """Validates the goal instance before committing to the database.
+
+        Raises:
+            ValueError: If any required fields are invalid.
+
+        TODO:
+            See about reminder being only a select few options.
+        """
+        logger.info(f"Validating goal.")
+        if not self.title or not isinstance(self.title, str):
+            raise ValueError("Title must be a non-empty string.")
+        if not isinstance(self.description, str):
+            raise ValueError("Goal description must be a string.")
+        if self.target is None or not isinstance(self.target, int) or self.target < 0:
+            raise ValueError("Target an integer at least 0.")
+        if self.progress is None or not isinstance(self.progress, int) or self.progress < 0:
+            raise ValueError("Progress an integer at least 0.")
+        if not self.reminder or not isinstance(self.reminder, str):
+            raise ValueError("Reminder must be a non-empty string.")
+
+
+    @app_commands.command(name="create-goal", description="Set a new goal!")
+    async def create_goal_command(self, interaction : discord.Interaction):
+        """User creates a goal using command .create-goal and they submit their goal through a modal.
+
+        Args:
+            interaction: The discord interaction of the user's request.
+        
+        Awaits:
+            Sending an instance of the GoalModal class for the user to submit their goal.
+
+        """
+        logger.info(f"Received request to create a goal. Sending modal...")
+        goal_modal = GoalModal()
+        await interaction.response.send_modal(goal_modal)
+
+
     #Inserts user information into goals.db
     #user_id, goal_id, target, description, progress, title
-    #goal_id Primary Key and AUTO-INCREMENT
-    def insert_DB(self, user_id : int, target : int, description : str, title : str, reminder: str) -> str:
+    #goal_id Primary Key and AUTO-INCREMENT. look at db_init.sql for this now
+    def create_goal(self, user_id : int, title : str, description : str, target : int, reminder: str) -> str:
         """Insert a new goal into the DB
 
         Args:
@@ -54,65 +153,59 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
             Move to sql utils? check if already exists
 
         """
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
-        # print("C")
-        print(self.goal_id)
-        if self.goal_id:
-            # print("A")
-            cursor.execute("UPDATE Goals SET target = ?, description = ?, progress = ?, title = ?, reminder = ? WHERE goal_id = ?", (target, description, 0, title, reminder, self.goal_id))
-            action = "updated"
-        else:
-            # print("B")
-            cursor.execute("INSERT INTO Goals (user_id, target, description, progress, title, reminder, job) Values (?,?,?,?,?,?,?)", (user_id, target, description, 0, title, reminder, None))
-            action = "created"
+        logger.info(f"Inserting goal: user_id - {user_id}, title - {title}, description - {description}, target - {target}, reminder - {reminder}")
 
-        connection.commit()
-        connection.close()
-        return action
+        try:
+            goal = Goal(
+                user_id = user_id,
+                title = title,
+                description = description,
+                target = target,
+                reminder = reminder
+            )
+            goal.validate()
+        except ValueError as e:
+            logger.warning(f"Validation failed: {e}")
+            raise
 
-    #Send a confirmation embed containing submitted information
-    async def on_submit(self, interaction : discord.Interaction):
-        """Asynchronous method for when users submit their goal information in thte modal.
+        try:
+            # Check for existing goal with same compound key (title, target)
+            existing = Goal.query.filter_by(title=title.strip(), target=target).first()
+            if existing:
+                logger.error(f"Goal {title} - {target} already exists.")
+                raise ValueError(f"Goal '{title}' - '{target}' already exists.")
+            
+            db.session.add(goal)
+            db.session.commit()
+            logger.info(f"Goal '{title}' - '{target}' successfully added.")
 
-        Args:
-            interaction: The discord interaction of the user's request.
+        # Duplicate - do we need this one we might not? Try commenting this out when making unit tests
+        except IntegrityError:
+            logger.error(f"Goal {title} - {target} already exists.")
+            db.session.rollback()
+            raise ValueError(f"Goal {title} - {target} already exists.")
 
-        Awaits:
-            Sending a message in the corresponding channel.
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while creating goal: {e}")
+            db.session.rollback()
+            raise 
 
-        Raises:
-        
-        TODO:
-            Add a try except statement for a sql error
-            Add logging
-            Move to sql utils? check if already exists
+        # connection = sqlite3.connect("./cogs/goals.db")
+        # cursor = connection.cursor()
+        # # print("C")
+        # print(self.goal_id)
+        # if self.goal_id:
+        #     # print("A")
+        #     cursor.execute("UPDATE Goals SET target = ?, description = ?, progress = ?, title = ?, reminder = ? WHERE goal_id = ?", (target, description, 0, title, reminder, self.goal_id))
+        #     action = "updated"
+        # else:
+        #     # print("B")
+        #     cursor.execute("INSERT INTO Goals (user_id, target, description, progress, title, reminder, job) Values (?,?,?,?,?,?,?)", (user_id, target, description, 0, title, reminder, None))
+        #     action = "created"
 
-        """
-        # print("D")
-        action = self.insert_DB(interaction.user.id, self.goal_target.value, self.goal_description.value, self.goal_title.value, "N")
-        channel = interaction.guild.get_channel(settings.LOGGER_CH)
-
-        embed = discord.Embed(title=self.goal_title.value,
-                              description=self.goal_description.value,
-                              color=discord.Color.yellow())
-        embed.set_author(name=interaction.user.name)
-
-        await channel.send(embed=embed)
-        await interaction.response.send_message(f"Succesfully {action} goal!", ephemeral=True)
-
-    async def on_error(self, interaction : discord.Interaction, error):
-        ...
-
-
-"""Goal class cog to handle all the goal relate fuctions"""
-class Goal(commands.Cog):
-
-    # Command to set/create a new goal
-    @app_commands.command(name="create-goal", description="Set a new goal!")
-    async def set_goal(self, interaction : discord.Interaction):
-        goal_modal = GoalModal() 
-        await interaction.response.send_modal(goal_modal)
+        # connection.commit()
+        # connection.close()
+        # return action
 
     # Function to fetch all the goal_ids linked with user_id for autocomplete
     async def goal_choices(self, interaction: discord.Interaction, current: str) -> typing.List[app_commands.Choice[int]]:
