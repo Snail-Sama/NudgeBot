@@ -21,8 +21,15 @@ def run():
 
     @bot.event
     async def on_ready():
+        """Event triggered when the bot is started up.
+
+        Awaits:
+            TODO what is the bot.tree.sync
+        
+        """
         logger.info(f"User: {bot.user} (ID: {bot.user.id})")
 
+        logger.info(f"Loading cogs...")
         for cogs_file in settings.COGS_DIR.glob("*.py"):
             if cogs_file.name != "__init__.py":
                 await bot.load_extension(f"nudge_bot.cogs.{cogs_file.name[:-3]}")
@@ -31,6 +38,12 @@ def run():
         await bot.tree.sync(guild=settings.GUILDS_ID)
 
     async def cogs_autocompletion(interaction: discord.Interaction, current : str) -> typing.List[app_commands.Choice[str]]:
+        """Allows the botmeister to see autocompleted list of cogs.
+        
+        Returns:
+            data containing the list of cogs which are completed by the current string typed
+            
+        """
         cogs = [cogs_file for cogs_file in settings.COGS_DIR.glob("*.py") if cogs_file.name != '__init__.py']
         data = []
         for cog in cogs:
