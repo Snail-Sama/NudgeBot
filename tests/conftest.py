@@ -39,7 +39,7 @@ def app():
         db.drop_all()
 
 @pytest.fixture(scope="function")
-def session():
+def session(app):
     """Creates a scoped session compatible with Flask-SQLAlchemy 3.x."""
     connection = db.engine.connect()
     transaction = connection.begin()
