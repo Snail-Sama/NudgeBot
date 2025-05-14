@@ -97,6 +97,7 @@ class Goal(db.Model):
             See about reminder being only a select few options.
         """
         logger.info(f"Validating goal.")
+        logger.info(f"{self.title}")
         if not self.title or not isinstance(self.title, str): # execution stops here
             logger.error(f"Title must be a non-empty string. Not {self.title}.")
             raise ValueError("Title must be a non-empty string.")
@@ -146,7 +147,7 @@ class Goal(db.Model):
                 progress = 0,
                 reminder = reminder
             )
-            # goal.validate() # execution stops here when uncommented
+            goal.validate() # execution stops here when uncommented
         except ValueError as e:
             logger.warning(f"Validation failed: {e}")
             raise
