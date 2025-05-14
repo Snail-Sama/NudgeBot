@@ -12,61 +12,61 @@ from nudge_bot.utils.logger import configure_logger
 logger = logging.getLogger(__name__)
 configure_logger(logger)
 
-class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
-    """Modal for the user to submit their goal.
+# class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
+#     """Modal for the user to submit their goal.
     
-    Attributes:
-        goal_title: Short text input for title of goal (required).
-        goal_description: Long text input for description of goal (not required).
-        goal_target: Short text input for target of goal; should be an int (required).
-        goal_id: Goal ID which user does not input but used for edit_goal; should be an int.
+#     Attributes:
+#         goal_title: Short text input for title of goal (required).
+#         goal_description: Long text input for description of goal (not required).
+#         goal_target: Short text input for target of goal; should be an int (required).
+#         goal_id: Goal ID which user does not input but used for edit_goal; should be an int.
 
-    """
-    goal_title = discord.ui.TextInput(
-        style = discord.TextStyle.short,
-        label = "Title",
-        required = True,
-        placeholder = "A short title of your goal!"
-    )
-    goal_description = discord.ui.TextInput(
-        style = discord.TextStyle.long,
-        label = "Description",
-        required = False,
-        max_length = 500,
-        placeholder = "Describe the goal you want to achieve!"
-    )
-    goal_target = discord.ui.TextInput(
-        style = discord.TextStyle.short,
-        label = "Target",
-        required = True,
-        placeholder = "Enter the number in your goal! Ex: the '100' in 100 push-ups"
-    )
+#     """
+#     goal_title = discord.ui.TextInput(
+#         style = discord.TextStyle.short,
+#         label = "Title",
+#         required = True,
+#         placeholder = "A short title of your goal!"
+#     )
+#     goal_description = discord.ui.TextInput(
+#         style = discord.TextStyle.long,
+#         label = "Description",
+#         required = False,
+#         max_length = 500,
+#         placeholder = "Describe the goal you want to achieve!"
+#     )
+#     goal_target = discord.ui.TextInput(
+#         style = discord.TextStyle.short,
+#         label = "Target",
+#         required = True,
+#         placeholder = "Enter the number in your goal! Ex: the '100' in 100 push-ups"
+#     )
 
-    goal_id = None
+#     goal_id = None
 
-    async def on_submit(self, interaction : discord.Interaction) -> str:
-        """Asynchronous method for when users submit their goal information in the modal. 
-        Sends an embed with basic information about the goal in the interaction channel and a confirmation message upon completion.
+#     async def on_submit(self, interaction: discord.Interaction) -> str:
+#         """Asynchronous method for when users submit their goal information in the modal. 
+#         Sends an embed with basic information about the goal in the interaction channel and a confirmation message upon completion.
 
-        Args:
-            interaction: The discord interaction of the user's request.
+#         Args:
+#             interaction: The discord interaction of the user's request.
 
-        """
-        logger.info(f"User submitted modal.")
-        action = Goal.create_goal(interaction.user.id, self.goal_title.value, self.goal_description.value, self.goal_target.value, "N")
-        channel = interaction.guild.get_channel(settings.LOGGER_CH)
+#         """
+#         logger.info(f"User submitted modal.")
+#         action = Goal.create_goal(interaction.user.id, self.goal_title.value, self.goal_description.value, self.goal_target.value, "N")
+#         channel = interaction.guild.get_channel(settings.LOGGER_CH)
 
-        embed = discord.Embed(title=self.goal_title.value,
-                              description=self.goal_description.value,
-                              color=discord.Color.yellow())
-        embed.set_author(name=interaction.user.name)
+#         embed = discord.Embed(title=self.goal_title.value,
+#                               description=self.goal_description.value,
+#                               color=discord.Color.yellow())
+#         embed.set_author(name=interaction.user.name)
 
-        logger.info("Sending embed and response.")
-        await channel.send(embed=embed)
-        await interaction.response.send_message(f"Succesfully {action} goal!", ephemeral=True)
+#         logger.info("Sending embed and response.")
+#         await channel.send(embed=embed)
+#         await interaction.response.send_message(f"Succesfully {action} goal!", ephemeral=True)
 
-    async def on_error(self, interaction : discord.Interaction, error):
-        ...
+#     async def on_error(self, interaction : discord.Interaction, error):
+#         ...
 
 
 class Goal(db.Model):
