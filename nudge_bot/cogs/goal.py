@@ -1,13 +1,9 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import typing
-import sqlite3
-import settings, logging
-import schedule
+import settings, logging, sqlite3, typing
 
 from sqlalchemy import Text
-
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from nudge_bot.db import db
@@ -17,7 +13,15 @@ logger = logging.getLogger(__name__)
 configure_logger(logger)
 
 class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
-    """Modal for the user to submit their goal."""
+    """Modal for the user to submit their goal.
+    
+    Attributes:
+        goal_title: Short text input for title of goal (required).
+        goal_description: Long text input for description of goal (not required).
+        goal_target: Short text input for target of goal; should be an int (required).
+        goal_id: Goal ID which user does not input but used for edit_goal; should be an int.
+
+    """
     goal_title = discord.ui.TextInput(
         style = discord.TextStyle.short,
         label = "Title",
@@ -118,7 +122,7 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
 
 
     #Commmand to delete a goal
-    @app_commands.command(name="delete-goal", description="Delete one of you goals")
+    @app_commands.command(name="delete-goal", description="Delete one of your goals")
     @app_commands.autocomplete(goal=goal_choices)
     async def delete_goal(self, interaction: discord.Interaction, goal_id: int):
         """User deletes a goal using command .delete-goal and sends confirmation upon completion
@@ -459,4 +463,4 @@ class Goal(db.Model):
         return (progress, percent, reminder)
 
 async def setup(bot):
-    await bot.add_cog(Goal(bot))
+    await bot.add_cog(GoalCog(bot))

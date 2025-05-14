@@ -95,7 +95,24 @@ class TestGoal(TestCase):
         with pytest.raises(ValueError):
             Goal.create_goal(user_id=1, title=title, description=description, target=target, reminder=reminder)
 
+    def test_delete_goal(self):
+        ...
 
+    def test_delete_goal_error(self):
+        ...
+
+    def test_log_goal(self):
+        ...
+
+    def test_log_goal_error(self):
+        ...
+
+    def test_check_progress(self):
+        ...
+
+    def test_check_progress_error(self):
+        ...
+        
     # # --- Get Goal ---
 
     # def test_get_goal_by_id(goal_biceps):
