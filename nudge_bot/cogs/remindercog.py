@@ -5,7 +5,7 @@ import sqlite3, time, asyncio, schedule, threading, datetime, logging
 
 from nudge_bot.utils.logger import configure_logger
 import settings
-from nudge_bot.cogs.goal import GoalCog
+from nudge_bot.cogs.goalcog import GoalCog
 from bot import is_BotMeister
 
 logger = logging.getLogger(__name__)
@@ -116,7 +116,7 @@ class ReminderCog(commands.Cog):
     
     # /set_reminder command will set a reminder for a specific goal to send at various intervals
     @app_commands.command(name="set-reminder", description = "Set your reminder!")
-    @app_commands.autocomplete(goal_id=GoalCog.goal_choices)
+    @app_commands.autocomplete(goal_id=GoalCog.goal_autocomplete)
     async def set_reminder(self, interaction: discord.Interaction, goal_id: int) -> None:
         """Set a reminder for a goal to send at various intervals. Sends a followup message upon completion.
 
