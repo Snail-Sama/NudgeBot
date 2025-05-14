@@ -1,11 +1,15 @@
 import discord
 from discord.ext import commands
 from discord import app_commands, utils
-import sqlite3, time, asyncio, schedule, threading, datetime
+import sqlite3, time, asyncio, schedule, threading, datetime, logging
 
+from nudge_bot.utils.logger import configure_logger
 import settings
 from nudge_bot.cogs.goal import GoalCog
 from bot import is_BotMeister
+
+logger = logging.getLogger(__name__)
+configure_logger(logger)
 
 class Frequency_Select(discord.ui.Select):
     """List of frequency options for a dropdown menu.
@@ -26,6 +30,7 @@ class Frequency_Select(discord.ui.Select):
         """Response to answer?
 
         """
+        logger.info("FrequencySelect callback")
         await self.view.respond_to_answer(interaction, self.values)
 
 class DropdownView(discord.ui.View):
@@ -47,6 +52,7 @@ class DropdownView(discord.ui.View):
             choices: List of frequencies the user may choose for their reminder.
         
         """
+        logger.info("Responding to answer.")
         self.answer = choices
         self.children[0].disabled = True
 
@@ -70,11 +76,13 @@ class ReminderCog(commands.Cog):
         """Run a scheduler in a separate thread and check every minute for a task.
         
         """
+        logger.info("Started scheduler.")
         while True:
+            logger.info("Scheduler ran all pending.")
             schedule.run_pending()
             time.sleep(60)
     
-    # Sends reminder mentioning user in #new-years-resolutions channel
+
     async def send_reminder(self, interaction: discord.Interaction, goal_id: int) -> None:
         """Sends reminder mentioning user in the #new-years-resolution channel.
 
@@ -83,6 +91,7 @@ class ReminderCog(commands.Cog):
             goal_id: ID of the goal we want to send the reminder for.
         
         """
+        logger.info("Sending reminder")
         # Opens connection to database
         connection = sqlite3.connect("./cogs/goals.db")
         cursor = connection.cursor()
@@ -106,7 +115,7 @@ class ReminderCog(commands.Cog):
         await channel.send(f"{user.mention} Don't forget about your goal: {title}! I will remind you {reminder_message} ;)")
     
     # /set_reminder command will set a reminder for a specific goal to send at various intervals
-    @app_commands.command(name="set_reminder", description = "Set your reminder!")
+    @app_commands.command(name="set-reminder", description = "Set your reminder!")
     @app_commands.autocomplete(goal_id=GoalCog.goal_choices)
     async def set_reminder(self, interaction: discord.Interaction, goal_id: int) -> None:
         """Set a reminder for a goal to send at various intervals. Sends a followup message upon completion.
@@ -121,8 +130,10 @@ class ReminderCog(commands.Cog):
         TODO:
             * call a helper funciton
             * ORM
+            * Fix action (right now it's only 'updated' not 'set')
         
         """
+        logger.info("Received request for setting a reminder.")
         # Sends dropdown menu
         view = DropdownView()
         await interaction.response.send_message(view=view, ephemeral=False) # i want to make this true but it's being annoying
@@ -190,11 +201,12 @@ class ReminderCog(commands.Cog):
         connection.commit()
         connection.close()
 
+        logger.info("Reminder created/updated.")
         # Sends response for user
         await interaction.followup.send(f"Reminder {action} to {reminder} from {old_reminder}", ephemeral=True)
     
     # Clears entire reminder schedule (TESTING PURPOSES ONLY)
-    @app_commands.command(name="stop_reminder", description = "STOP!")
+    @app_commands.command(name="stop-reminder", description = "STOP!")
     @is_BotMeister()
     async def stop_reminder(self, interaction: discord.Interaction) -> None:
         """Clears entire reminder schedule. Must be BotMeister.
@@ -203,6 +215,7 @@ class ReminderCog(commands.Cog):
             interaction: The discord interaction with the user.
         
         """
+        logger.info("Received request to stop reminders.")
         schedule.clear()
         await interaction.response.send_message("Stopped", ephemeral=True)
 
