@@ -1,3 +1,27 @@
-WARNING    - 2025-05-12 23:17:12,992 - client          : PyNaCl is not installed, voice will NOT be supported
-INFO       - 2025-05-12 23:17:12,993 - client          : logging in using static token
-INFO       - 2025-05-12 23:17:14,092 - gateway         : Shard ID None has connected to Gateway (Session ID: 0eabe7df20384f5f99877c6b2ff0fb2f).
+INFO       - 2025-05-13 22:32:03,285 - client          : logging in using static token
+INFO       - 2025-05-13 22:32:05,011 - gateway         : Shard ID None has connected to Gateway (Session ID: 563bc988ac37edc9c7726c478ee2b328).
+ERROR      - 2025-05-13 22:49:25,976 - tree            : Ignoring exception in command 'create-goal'
+Traceback (most recent call last):
+  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 857, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/NudgeBot/nudge_bot/cogs/goalcog.py", line 121, in create_goal_command
+    await interaction.response.send_modal(goal_modal)
+  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/interactions.py", line 1220, in send_modal
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 226, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1310, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 883, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 876, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'create-goal' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.

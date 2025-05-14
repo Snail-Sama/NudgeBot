@@ -1,15 +1,20 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
-from discord import utils
+from discord import app_commands, utils
+import sqlite3, time, asyncio, schedule, threading, datetime, logging
+
+from nudge_bot.utils.logger import configure_logger
 import settings
-import sqlite3
-from .goal import Goal
-import time, asyncio, schedule, threading
-import datetime
+from nudge_bot.cogs.goalcog import GoalCog
 from bot import is_BotMeister
 
+logger = logging.getLogger(__name__)
+configure_logger(logger)
+
 class Frequency_Select(discord.ui.Select):
+    """List of frequency options for a dropdown menu.
+    
+    """
     def __init__(self):
         options = [ # Options for reminders
             discord.SelectOption(label="2x Daily", value="2D"),
@@ -21,19 +26,33 @@ class Frequency_Select(discord.ui.Select):
         super().__init__(options=options, placeholder="Would you like a reminder?", min_values=1, max_values=1)
 
     # Responds to user input
-    async def callback(self, interaction:discord.Interaction):
+    async def callback(self, interaction: discord.Interaction):
+        """Response to answer?
+
+        """
+        logger.info("FrequencySelect callback")
         await self.view.respond_to_answer(interaction, self.values)
 
 class DropdownView(discord.ui.View):
+    """Dropdown view for a user to select the frequency of their reminders.
+    
+    """
     def __init__(self, *, timeout: int = 100):
         super().__init__(timeout=timeout)
         self.answer = None
         # Adds the options to the view so the dropdown menu is visible
         self.add_item(Frequency_Select())
 
-    # Logs user input to self.answer and completes the interaction
-    async def respond_to_answer(self, interaction:discord.Integration, choices:list[str]):
-        # Takes user input and disables the dropdown from further interaction
+
+    async def respond_to_answer(self, interaction: discord.Integration, choices: list[str]):
+        """Takes user input and disables the dropdown from further interaction.
+
+        Args:
+            interaction: The discord interaction with the user.
+            choices: List of frequencies the user may choose for their reminder.
+        
+        """
+        logger.info("Responding to answer.")
         self.answer = choices
         self.children[0].disabled = True
 
@@ -42,21 +61,37 @@ class DropdownView(discord.ui.View):
         await interaction.response.defer()
         self.stop()
 
-class Reminder(commands.Cog):
-    def __init__(self, bot:commands.bot) -> None:
+class ReminderCog(commands.Cog):
+    """Cog for the reminder commands.
+    
+    """
+    def __init__(self, bot: commands.bot) -> None:
         self.bot = bot
         # Creates and runs scheduler for reminders
         self.scheduler_thread = threading.Thread(target=self.run_scheduler, daemon=True)
         self.scheduler_thread.start()
 
-    # Runs scheduler in a separate thread and checks every minute for a task
+
     def run_scheduler(self) -> None:
+        """Run a scheduler in a separate thread and check every minute for a task.
+        
+        """
+        logger.info("Started scheduler.")
         while True:
+            logger.info("Scheduler ran all pending.")
             schedule.run_pending()
             time.sleep(60)
     
-    # Sends reminder mentioning user in #new-years-resolutions channel
+
     async def send_reminder(self, interaction: discord.Interaction, goal_id: int) -> None:
+        """Sends reminder mentioning user in the #new-years-resolution channel.
+
+        Args:
+            interaction: The discord interaction with the user.
+            goal_id: ID of the goal we want to send the reminder for.
+        
+        """
+        logger.info("Sending reminder")
         # Opens connection to database
         connection = sqlite3.connect("./cogs/goals.db")
         cursor = connection.cursor()
@@ -80,9 +115,25 @@ class Reminder(commands.Cog):
         await channel.send(f"{user.mention} Don't forget about your goal: {title}! I will remind you {reminder_message} ;)")
     
     # /set_reminder command will set a reminder for a specific goal to send at various intervals
-    @app_commands.command(name="set_reminder", description = "Set your reminder!")
-    @app_commands.autocomplete(goal_id=Goal.goal_choices)
+    @app_commands.command(name="set-reminder", description = "Set your reminder!")
+    @app_commands.autocomplete(goal_id=GoalCog.goal_autocomplete)
     async def set_reminder(self, interaction: discord.Interaction, goal_id: int) -> None:
+        """Set a reminder for a goal to send at various intervals. Sends a followup message upon completion.
+
+        Args:
+            interaction: The discord interaction with the user.
+            goal_id: ID of the goal we want to set the reminder for.
+
+        Raises:
+            TODO implement sql exceptions
+
+        TODO:
+            * call a helper funciton
+            * ORM
+            * Fix action (right now it's only 'updated' not 'set')
+        
+        """
+        logger.info("Received request for setting a reminder.")
         # Sends dropdown menu
         view = DropdownView()
         await interaction.response.send_message(view=view, ephemeral=False) # i want to make this true but it's being annoying
@@ -104,8 +155,6 @@ class Reminder(commands.Cog):
         # Sets new reminder
         cursor.execute("UPDATE Goals SET reminder = ? WHERE goal_id = ?", (reminder, goal_id))
         action = "updated"
-
-        
 
         # If a reminder has not already been created, create the job object
         if job == None:
@@ -152,16 +201,24 @@ class Reminder(commands.Cog):
         connection.commit()
         connection.close()
 
+        logger.info("Reminder created/updated.")
         # Sends response for user
         await interaction.followup.send(f"Reminder {action} to {reminder} from {old_reminder}", ephemeral=True)
     
     # Clears entire reminder schedule (TESTING PURPOSES ONLY)
-    @app_commands.command(name="stop_reminder", description = "STOP!")
+    @app_commands.command(name="stop-reminder", description = "STOP!")
     @is_BotMeister()
     async def stop_reminder(self, interaction: discord.Interaction) -> None:
+        """Clears entire reminder schedule. Must be BotMeister.
+
+        Args:
+            interaction: The discord interaction with the user.
+        
+        """
+        logger.info("Received request to stop reminders.")
         schedule.clear()
         await interaction.response.send_message("Stopped", ephemeral=True)
 
 
-async def setup(bot:commands.bot) -> None:
-    await bot.add_cog(Reminder(bot))
+async def setup(bot: commands.bot) -> None:
+    await bot.add_cog(ReminderCog(bot))

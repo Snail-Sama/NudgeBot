@@ -15,22 +15,45 @@ def is_BotMeister():
             return True
     return app_commands.check(predicate)
 
+
+# def create_bot():
+
 def run():
     intents = discord.Intents.all()
     bot = commands.Bot(command_prefix=".", intents = intents)
 
     @bot.event
     async def on_ready():
-        logger.info(f"User: {bot.user} (ID: {bot.user.id})")
+        """Event triggered when the bot is started up.
 
-        for cogs_file in settings.COGS_DIR.glob("*.py"):
-            if cogs_file.name != "__init__.py":
-                await bot.load_extension(f"nudge_bot.cogs.{cogs_file.name[:-3]}")
+        Awaits:
+            TODO what is the bot.tree.sync
         
+        """
+        logger.info(f"User: {bot.user} (ID: {bot.user.id})")
+        logger.info(f"Loading cogs...")
+
+        try:
+            for cogs_file in settings.COGS_DIR.glob("*.py"):
+                if cogs_file.name != "__init__.py":
+                    cog_name = cogs_file.name[0].upper() + cogs_file.name[1:-3] + "Cog"
+                    # logger.info(f"{cog_name}")
+                    await bot.load_extension(f"nudge_bot.cogs.{cogs_file.name[:-3]}")
+        except ValueError as e:
+            logger.warning(f"Cogs failed to load: {e}")
+            raise
+        
+        logger.info(f"Cogs successfully loaded!")
         bot.tree.copy_global_to(guild=settings.GUILDS_ID)
         await bot.tree.sync(guild=settings.GUILDS_ID)
 
     async def cogs_autocompletion(interaction: discord.Interaction, current : str) -> typing.List[app_commands.Choice[str]]:
+        """Allows the botmeister to see autocompleted list of cogs.
+        
+        Returns:
+            data containing the list of cogs which are completed by the current string typed
+            
+        """
         cogs = [cogs_file for cogs_file in settings.COGS_DIR.glob("*.py") if cogs_file.name != '__init__.py']
         data = []
         for cog in cogs:
