@@ -1,10 +1,9 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import settings, logging, sqlite3, typing
+import settings, logging, typing
 
-from sqlalchemy import Text
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 
 from nudge_bot.utils.logger import configure_logger
 from nudge_bot.models.goal import Goal, session
@@ -52,7 +51,7 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
             interaction: The discord interaction of the user's request.
 
         TODO:
-            * check if possible to convert to int
+            * make a check so that we can check if possible to convert to int
         """
         logger.info(f"User submitted modal.")
         converted = int(self.goal_target.value)
@@ -72,7 +71,7 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
         ...
 
 
-class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
+class GoalCog(commands.Cog):
     """Class for describing the Cog relating to any goal commands.
     
     """
@@ -121,18 +120,11 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
 
     @app_commands.command(name="delete-goal", description="Delete one of your goals")
     @app_commands.autocomplete(goal_id=goal_autocomplete)
-    async def delete_goal(self, interaction: discord.Interaction, goal_id: int):
+    async def delete_goal_command(self, interaction: discord.Interaction, goal_id: int):
         """User deletes a goal using command .delete-goal and sends confirmation upon completion
 
         Args: 
             interaction: The discord interaction of the user's request.
-
-        Raises:
-            TODO implement error where if there does not exist a goal following their request
-        
-        TODO:
-            * add logging
-            * call a Goals function instead for high cohesion (use ORM)
 
         """
         logger.info(f"Received request to delete a goal.")
@@ -143,17 +135,13 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
 
     @app_commands.command(name="log", description="log progress towards a goal")
     @app_commands.autocomplete(goal_id=goal_autocomplete)
-    async def log_goal(self, interaction: discord.Interaction, goal_id: int, entry: int):
+    async def log_goal_command(self, interaction: discord.Interaction, goal_id: int, entry: int):
         """User logs progress towards one of their goals and sends confirmation upon completion.
         
         Args:
             interaction: The discord interaction of the user's request.
             goal_id: The goal ID that the user wishes to log progress towards.
             entry: The amount of progress the user made towards their goal.
-
-        Raises:
-            TODO implement error when the goal does not exist
-            TODO implement error for any other sql error
 
         """
         logger.info(f"Received request to log progress to a goal...")
@@ -175,16 +163,12 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
 
     @app_commands.command(name="check-progress", description="Check your current progress towards completing a goal")
     @app_commands.autocomplete(goal_id=goal_autocomplete)
-    async def check_progress(self, interaction : discord.Interaction, goal_id: int):
+    async def check_progress_command(self, interaction : discord.Interaction, goal_id: int):
         """User can check progress towards a specific goal and will send a message with the corresponding data.
 
         Args:
             interaction: The discord interaction of the user's request.
             goal_id: The goal ID that the user wishes to check progress.
-
-        Raises:
-            TODO implement error when the goal does not exist
-            implement error for any other sql error
         
         """
         logger.info(f"Received request to check progress of a goal...")
@@ -193,7 +177,7 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
 
         await interaction.response.send_message(f"You have completed {progress} which means you are {percent:.2f}% done! Current reminder: {reminder}", ephemeral=True)
 
-    #Command to edit a goal's fields
+
     @app_commands.command(name="edit-goal", description="Edit a goal you had")
     @app_commands.autocomplete(goal_id=goal_autocomplete)
     async def edit_goal(self, interaction : discord.Interaction, goal_id: int):
@@ -202,10 +186,6 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
         Args:
             interaction: The discord interaction of the user's request.
             goal_id: The goal ID that the user wishes to check progress.
-
-        Raises:
-            TODO implement error when the goal does not exist
-            implement error for any other sql error
 
         TODO call a Goals function instead for high cohesion? Can i do this here?
         TODO make sure that this actually overrides and doesn't just create a new goal on submit
