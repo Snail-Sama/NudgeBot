@@ -6,70 +6,20 @@ import settings, logging, sqlite3, typing
 from sqlalchemy import Text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from nudge_bot.db import db
+from nudge_bot.db import session, Base
 from nudge_bot.utils.logger import configure_logger
+
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship
+
+engine = create_engine('sqlite:///nudge_bot/goals.db', echo=True)
+
+Base = declarative_base()
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
 
-# class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
-#     """Modal for the user to submit their goal.
-    
-#     Attributes:
-#         goal_title: Short text input for title of goal (required).
-#         goal_description: Long text input for description of goal (not required).
-#         goal_target: Short text input for target of goal; should be an int (required).
-#         goal_id: Goal ID which user does not input but used for edit_goal; should be an int.
-
-#     """
-#     goal_title = discord.ui.TextInput(
-#         style = discord.TextStyle.short,
-#         label = "Title",
-#         required = True,
-#         placeholder = "A short title of your goal!"
-#     )
-#     goal_description = discord.ui.TextInput(
-#         style = discord.TextStyle.long,
-#         label = "Description",
-#         required = False,
-#         max_length = 500,
-#         placeholder = "Describe the goal you want to achieve!"
-#     )
-#     goal_target = discord.ui.TextInput(
-#         style = discord.TextStyle.short,
-#         label = "Target",
-#         required = True,
-#         placeholder = "Enter the number in your goal! Ex: the '100' in 100 push-ups"
-#     )
-
-#     goal_id = None
-
-#     async def on_submit(self, interaction: discord.Interaction) -> str:
-#         """Asynchronous method for when users submit their goal information in the modal. 
-#         Sends an embed with basic information about the goal in the interaction channel and a confirmation message upon completion.
-
-#         Args:
-#             interaction: The discord interaction of the user's request.
-
-#         """
-#         logger.info(f"User submitted modal.")
-#         action = Goal.create_goal(interaction.user.id, self.goal_title.value, self.goal_description.value, self.goal_target.value, "N")
-#         channel = interaction.guild.get_channel(settings.LOGGER_CH)
-
-#         embed = discord.Embed(title=self.goal_title.value,
-#                               description=self.goal_description.value,
-#                               color=discord.Color.yellow())
-#         embed.set_author(name=interaction.user.name)
-
-#         logger.info("Sending embed and response.")
-#         await channel.send(embed=embed)
-#         await interaction.response.send_message(f"Succesfully {action} goal!", ephemeral=True)
-
-#     async def on_error(self, interaction : discord.Interaction, error):
-#         ...
-
-
-class Goal(db.Model):
+class Goal(Base):
     """Represents a user created goal
 
     This model maps to the 'goals' table and stores metadata for desired target areas.
@@ -79,13 +29,13 @@ class Goal(db.Model):
 
     __tablename__ = "Goals"
 
-    goal_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, nullable=False)
-    title = db.Column(db.String, nullable=False)
-    description = db.Column(db.String, nullable=True)
-    target = db.Column(db.Integer, nullable=False)
-    progress = db.Column(db.Integer, nullable=True, default=0)
-    reminder = db.Column(db.String, nullable=True, default='N')
+    goal_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    target = Column(Integer, nullable=False)
+    progress = Column(Integer, nullable=True, default=0)
+    reminder = Column(String, nullable=True, default='N')
 
     def validate(self) -> None:
         """Validates the goal instance before committing to the database.
@@ -99,22 +49,19 @@ class Goal(db.Model):
         logger.info(f"Validating goal.")
         if not self.title or not isinstance(self.title, str): # execution stops here
             logger.error(f"Title must be a non-empty string. Not {self.title}.")
-            raise ValueError("Title must be a non-empty string.")
-        else:
-            logger.info("else")
-        logger.info("does it make it here?")
+            raise ValueError(f"Title must be a non-empty string. Not {self.title}.")
         if self.description and not isinstance(self.description, str):
             logger.error(f"Goal description must be a string. Not {self.description}.")
-            raise ValueError("Goal description must be a string.")
+            raise ValueError(f"Goal description must be a string. Not {self.description}.")
         if self.target is None or not isinstance(self.target, int) or self.target < 0:
             logger.error(f"Target an integer at least 0. Not {self.target}.")
-            raise ValueError("Target an integer at least 0.")
+            raise ValueError(f"Target an integer at least 0. Not {self.target}")
         if self.progress is None or not isinstance(self.progress, int) or self.progress < 0:
             logger.error(f"Progress an integer at least 0. Not {self.progress}.")
-            raise ValueError("Progress an integer at least 0.")
+            raise ValueError(f"Progress an integer at least 0. Not {self.progress}")
         if not self.reminder or not isinstance(self.reminder, str):
             logger.error(f"Reminder must be a non-empty string. Not {self.reminder}.")
-            raise ValueError("Reminder must be a non-empty string.")
+            raise ValueError(f"Reminder must be a non-empty string. Not {self.reminder}.")
         logger.info(f"Valid goal.")
 
 
@@ -130,9 +77,11 @@ class Goal(db.Model):
             reminder: Frequency of the reminders the user wants to receive.
 
         Raises:
-        
+            ValueError: If any field is invalid or if a goal with the same compound key already exists. 
+            SQLAlchemyError: For any other database-related issues.
+
         TODO:
-            Add a try except statement for a sql error
+            * add a message to be sent when a duplicate goal is created
 
         """
         logger.info(f"Inserting goal: user_id - {user_id}, title - {title}, description - {description}, target - {target}, reminder - {reminder}")
@@ -146,52 +95,34 @@ class Goal(db.Model):
                 progress = 0,
                 reminder = reminder
             )
-            # goal.validate() # execution stops here when uncommented
+            goal.validate() # execution stops here when uncommented
         except ValueError as e:
             logger.warning(f"Validation failed: {e}")
             raise
 
         try:
             title=title.strip()
-            logger.info(title)
             logger.info(f"Check for existing goal with same compound key (title, target): ({title}, {target})")
-            existing = Goal.query.filter_by(title, target=target).first() # execution stops here idk why
+            existing = session.query(Goal).filter(Goal.title==title, Goal.target==target).first() # execution stops here idk why
             logger.info(existing)
             if existing:
                 logger.error(f"Goal {title} - {target} already exists.")
                 raise ValueError(f"Goal '{title}' - '{target}' already exists.")
             
-            db.session.add(goal)
-            db.session.commit()
+            session.add(goal)
+            session.commit()
             logger.info(f"Goal '{title}' - '{target}' successfully added.")
 
         # Duplicate - do we need this one we might not? Try commenting this out when making unit tests
         except IntegrityError:
             logger.error(f"Goal {title} - {target} already exists.")
-            db.session.rollback()
+            session.rollback()
             raise ValueError(f"Goal {title} - {target} already exists.")
 
         except SQLAlchemyError as e:
             logger.error(f"Database error while creating goal: {e}")
-            db.session.rollback()
+            session.rollback()
             raise 
-
-        # connection = sqlite3.connect("./cogs/goals.db")
-        # cursor = connection.cursor()
-        # # print("C")
-        # print(self.goal_id)
-        # if self.goal_id:
-        #     # print("A")
-        #     cursor.execute("UPDATE Goals SET target = ?, description = ?, progress = ?, title = ?, reminder = ? WHERE goal_id = ?", (target, description, 0, title, reminder, self.goal_id))
-        #     action = "updated"
-        # else:
-        #     # print("B")
-        #     cursor.execute("INSERT INTO Goals (user_id, target, description, progress, title, reminder, job) Values (?,?,?,?,?,?,?)", (user_id, target, description, 0, title, reminder, None))
-        #     action = "created"
-
-        # connection.commit()
-        # connection.close()
-        # return action
     
     
     @classmethod
@@ -202,25 +133,27 @@ class Goal(db.Model):
             goal_id: ID of the goal to be deleted.
 
         Raises:
-            TODO implement error for goal not found.
-        
-        TODO:
-            implement orm
+            ValueError: If the goal with the given ID does not exist.
+            SQLAlchemyError: For any database-related issues.
+    
         """
         logger.info(f"Deleting goal {goal_id}...")
 
-        # Connect to SQL database
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
+        try:
+            goal = session.query(Goal).filter(Goal.goal_id==goal_id)
+            if not goal:
+                logger.warning(f"Attempted to delete non-existent goal with ID {goal_id}")
+                raise ValueError(f"Goal with ID {goal_id} not found")
 
-        # Delete goal via goal_id primary key
-        cursor.execute("DELETE FROM Goals WHERE goal_id = ?", (goal_id,))
+            session.query(Goal).filter(Goal.goal_id==goal_id).delete()
+            session.commit()
 
-        # Close SQL database connection
-        connection.commit()
-        connection.close()
+            logger.info(f"Successfully deleted goal with ID {goal_id}")
 
-        logger.info(f"Successfully deleted goal {goal_id}")
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while deleting goal with ID {goal_id}: {e}")
+            session.rollback()
+            raise
 
 
     @classmethod
@@ -236,7 +169,8 @@ class Goal(db.Model):
             Title and description of goal.
 
         Raises:
-            TODO implement sql errors
+            ValueError: If the goal with the given ID does not exist.
+            SQLAlchemyError: For any database-related issues.
 
         TODO:
             implement orm
@@ -244,35 +178,29 @@ class Goal(db.Model):
         """
         logger.info(f"Logging progress {entry} to goal {goal_id}...")
 
-        # Connect to SQL database
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
+        try:
+            goal = session.query(Goal).filter(Goal.goal_id==goal_id).first()
+            logger.info(f"goal is: {goal}")
+            if not goal:
+                logger.warning(f"Attempted to update non-existent goal with ID {goal_id}")
+                raise ValueError(f"Goal with ID {goal_id} not found")
+            
+            goal.progress += entry
 
-        # Grab the target and progress values
-        cursor.execute("SELECT target, description, progress, title FROM Goals WHERE goal_id = ?", (goal_id,))
-        target, description, goal_progress, title = cursor.fetchone()
+            completed = goal.progress >= goal.target
 
-        #adds entry to what was already there
-        goal_progress += entry
+            session.query(Goal).filter(Goal.goal_id==goal_id).update({'progress': goal.progress})
+            session.commit()
 
-        #check if progress has reached target
-        if goal_progress >= target:
-            #reset progress
-            completed = True
-            goal_progress = 0
-        else:
-            completed = False
-        
-        #update progress in SQL database
-        cursor.execute("UPDATE Goals SET progress = ? WHERE goal_id = ?", (goal_progress, goal_id))
-
-        # Close SQL database connection
-        connection.commit()
-        connection.close()
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while logging progress: {e}")
+            session.rollback()
+            raise 
 
         logger.info(f"Successfully logged progress towards goal {goal_id}")
-        return (completed, title, description)
+        return (completed, goal.title, goal.description)
     
+
     @classmethod
     def check_progress(cls, goal_id: int) -> tuple[int, float, str]:
         """Check progress of a goal in the database.
@@ -284,31 +212,31 @@ class Goal(db.Model):
             Progress and percent completed of goal. Current reminder setting (could change this for reminder cog). 
         
         Raises:
-            TODO implement sql errors
-
-        TODO:
-            ORM
+            ValueError: If the goal with the given ID does not exist.
+            SQLAlchemyError: For any database-related issues.
 
         """
         logger.info(f"Checking progress of goal {goal_id}...")
 
-        # Connect to SQL database
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
+        try:
+            result = session.query(Goal).filter(Goal.goal_id==goal_id)
+            if not result:
+                logger.warning(f"Attempted to check progress of non-existent goal with ID {goal_id}")
+                raise ValueError(f"Goal with ID {goal_id} not found")
+            
+            goal = result[0]
 
-        # grabs target and progress from SQL database
-        cursor.execute("SELECT target, progress, reminder FROM Goals WHERE goal_id = ?", (goal_id,))
-        target, progress, reminder = cursor.fetchone()
+            # calculates percent based on progress/target
+            percent = (goal.progress / goal.target) * 100
 
-        # calculates percent based on progress/target
-        percent = (progress / target) * 100
-
-        # Close SQL database connection
-        connection.commit()
-        connection.close()
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while checking progress of goal: {e}")
+            session.rollback()
+            raise 
 
         logger.info(f"Successfully retreived progress of goal {goal_id}")
-        return (progress, percent, reminder)
+        return (goal.progress, percent, goal.reminder)
 
-# async def setup(bot):
-#     await bot.add_cog(GoalCog(bot))
+Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+session = Session()

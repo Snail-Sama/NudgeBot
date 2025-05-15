@@ -6,9 +6,8 @@ import settings, logging, sqlite3, typing
 from sqlalchemy import Text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from nudge_bot.db import db
 from nudge_bot.utils.logger import configure_logger
-from nudge_bot.models.goal import Goal
+from nudge_bot.models.goal import Goal, session
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
@@ -52,9 +51,12 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
         Args:
             interaction: The discord interaction of the user's request.
 
+        TODO:
+            * check if possible to convert to int
         """
         logger.info(f"User submitted modal.")
-        action = Goal.create_goal(interaction.user.id, self.goal_title.value, self.goal_description.value, self.goal_target.value, "N")
+        converted = int(self.goal_target.value)
+        action = Goal.create_goal(interaction.user.id, self.goal_title.value, self.goal_description.value, converted, "N")
         channel = interaction.guild.get_channel(settings.LOGGER_CH)
 
         embed = discord.Embed(title=self.goal_title.value,
@@ -88,22 +90,18 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
             implement ORM here
 
         """
-        # Connect to SQL database
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
+        try:
+            result = session.query(Goal).filter(Goal.user_id==interaction.user.id).all()
 
-        # Fetch goal_ids under a user
-        cursor.execute("SELECT goal_id, title FROM Goals WHERE user_id = ?", (interaction.user.id,))
-        goal_ids = cursor.fetchall()
+            choices = []
+            for goal in result:
+                if current.lower() in goal.title.lower():
+                    choices.append(app_commands.Choice(name=goal.title, value=goal.goal_id))
 
-        # Close SQL database connection
-        connection.close()
-
-        # Create autocomplete choices
-        choices = []
-        for goal_id, title in goal_ids:
-            if current.lower() in title.lower():
-                choices.append(app_commands.Choice(name=title, value=goal_id))
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while checking progress of goal: {e}")
+            session.rollback()
+            raise 
 
         return choices
     
@@ -133,8 +131,8 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
             TODO implement error where if there does not exist a goal following their request
         
         TODO:
-            add logging
-            call a Goals function instead for high cohesion (use ORM)
+            * add logging
+            * call a Goals function instead for high cohesion (use ORM)
 
         """
         logger.info(f"Received request to delete a goal.")

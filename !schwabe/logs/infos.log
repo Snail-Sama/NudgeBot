@@ -1,27 +1,13 @@
-INFO       - 2025-05-13 22:32:03,285 - client          : logging in using static token
-INFO       - 2025-05-13 22:32:05,011 - gateway         : Shard ID None has connected to Gateway (Session ID: 563bc988ac37edc9c7726c478ee2b328).
-ERROR      - 2025-05-13 22:49:25,976 - tree            : Ignoring exception in command 'create-goal'
+INFO       - 2025-05-13 23:00:37,164 - client          : logging in using static token
+INFO       - 2025-05-13 23:00:38,135 - gateway         : Shard ID None has connected to Gateway (Session ID: 83bd2b3144485a0bf03a20677feb257f).
+INFO       - 2025-05-13 23:19:45,949 - gateway         : Shard ID None session has been invalidated.
+INFO       - 2025-05-13 23:19:51,326 - gateway         : Shard ID None has connected to Gateway (Session ID: 92840764776c4d23d26a1cc712cadcdb).
+ERROR      - 2025-05-13 23:19:53,361 - client          : Ignoring exception in on_ready
 Traceback (most recent call last):
-  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 857, in _do_call
-    return await self._callback(self.binding, interaction, **params)  # type: ignore
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/root/NudgeBot/nudge_bot/cogs/goalcog.py", line 121, in create_goal_command
-    await interaction.response.send_modal(goal_modal)
-  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/interactions.py", line 1220, in send_modal
-    response = await adapter.create_interaction_response(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 226, in request
-    raise HTTPException(response, data)
-discord.errors.HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1310, in _call
-    await command._invoke_with_namespace(interaction, namespace)
-  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 883, in _invoke_with_namespace
-    return await self._do_call(interaction, transformed_values)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 876, in _do_call
-    raise CommandInvokeError(self, e) from e
-discord.app_commands.errors.CommandInvokeError: Command 'create-goal' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/client.py", line 481, in _run_event
+    await coro(*args, **kwargs)
+  File "/root/NudgeBot/bot.py", line 41, in on_ready
+    await bot.load_extension(f"nudge_bot.cogs.{cogs_file.name[:-3]}")
+  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/ext/commands/bot.py", line 1023, in load_extension
+    raise errors.ExtensionAlreadyLoaded(name)
+discord.ext.commands.errors.ExtensionAlreadyLoaded: Extension 'nudge_bot.cogs.goalcog' is already loaded.
