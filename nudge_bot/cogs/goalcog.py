@@ -133,8 +133,8 @@ class GoalCog(commands.Cog): # Goal(commands.Cog, db.Model):
             TODO implement error where if there does not exist a goal following their request
         
         TODO:
-            add logging
-            call a Goals function instead for high cohesion (use ORM)
+            * add logging
+            * call a Goals function instead for high cohesion (use ORM)
 
         """
         logger.info(f"Received request to delete a goal.")

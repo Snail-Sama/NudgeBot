@@ -6,70 +6,20 @@ import settings, logging, sqlite3, typing
 from sqlalchemy import Text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from nudge_bot.db import db
+from nudge_bot.db import session, Base
 from nudge_bot.utils.logger import configure_logger
+
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship
+
+engine = create_engine('sqlite:///nudge_bot/goals.db', echo=True)
+
+Base = declarative_base()
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
 
-# class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
-#     """Modal for the user to submit their goal.
-    
-#     Attributes:
-#         goal_title: Short text input for title of goal (required).
-#         goal_description: Long text input for description of goal (not required).
-#         goal_target: Short text input for target of goal; should be an int (required).
-#         goal_id: Goal ID which user does not input but used for edit_goal; should be an int.
-
-#     """
-#     goal_title = discord.ui.TextInput(
-#         style = discord.TextStyle.short,
-#         label = "Title",
-#         required = True,
-#         placeholder = "A short title of your goal!"
-#     )
-#     goal_description = discord.ui.TextInput(
-#         style = discord.TextStyle.long,
-#         label = "Description",
-#         required = False,
-#         max_length = 500,
-#         placeholder = "Describe the goal you want to achieve!"
-#     )
-#     goal_target = discord.ui.TextInput(
-#         style = discord.TextStyle.short,
-#         label = "Target",
-#         required = True,
-#         placeholder = "Enter the number in your goal! Ex: the '100' in 100 push-ups"
-#     )
-
-#     goal_id = None
-
-#     async def on_submit(self, interaction: discord.Interaction) -> str:
-#         """Asynchronous method for when users submit their goal information in the modal. 
-#         Sends an embed with basic information about the goal in the interaction channel and a confirmation message upon completion.
-
-#         Args:
-#             interaction: The discord interaction of the user's request.
-
-#         """
-#         logger.info(f"User submitted modal.")
-#         action = Goal.create_goal(interaction.user.id, self.goal_title.value, self.goal_description.value, self.goal_target.value, "N")
-#         channel = interaction.guild.get_channel(settings.LOGGER_CH)
-
-#         embed = discord.Embed(title=self.goal_title.value,
-#                               description=self.goal_description.value,
-#                               color=discord.Color.yellow())
-#         embed.set_author(name=interaction.user.name)
-
-#         logger.info("Sending embed and response.")
-#         await channel.send(embed=embed)
-#         await interaction.response.send_message(f"Succesfully {action} goal!", ephemeral=True)
-
-#     async def on_error(self, interaction : discord.Interaction, error):
-#         ...
-
-
-class Goal(db.Model):
+class Goal(Base):
     """Represents a user created goal
 
     This model maps to the 'goals' table and stores metadata for desired target areas.
@@ -79,13 +29,13 @@ class Goal(db.Model):
 
     __tablename__ = "Goals"
 
-    goal_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, nullable=False)
-    title = db.Column(db.String, nullable=False)
-    description = db.Column(db.String, nullable=True)
-    target = db.Column(db.Integer, nullable=False)
-    progress = db.Column(db.Integer, nullable=True, default=0)
-    reminder = db.Column(db.String, nullable=True, default='N')
+    goal_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    target = Column(Integer, nullable=False)
+    progress = Column(Integer, nullable=True, default=0)
+    reminder = Column(String, nullable=True, default='N')
 
     def validate(self) -> None:
         """Validates the goal instance before committing to the database.
@@ -156,25 +106,25 @@ class Goal(db.Model):
             title=title.strip()
             logger.info(title)
             logger.info(f"Check for existing goal with same compound key (title, target): ({title}, {target})")
-            existing = Goal.query.filter_by(title, target=target).first() # execution stops here idk why
+            existing = session.query(title, target=target).first() # execution stops here idk why
             logger.info(existing)
             if existing:
                 logger.error(f"Goal {title} - {target} already exists.")
                 raise ValueError(f"Goal '{title}' - '{target}' already exists.")
             
-            db.session.add(goal)
-            db.session.commit()
+            session.add(goal)
+            session.commit()
             logger.info(f"Goal '{title}' - '{target}' successfully added.")
 
         # Duplicate - do we need this one we might not? Try commenting this out when making unit tests
         except IntegrityError:
             logger.error(f"Goal {title} - {target} already exists.")
-            db.session.rollback()
+            session.rollback()
             raise ValueError(f"Goal {title} - {target} already exists.")
 
         except SQLAlchemyError as e:
             logger.error(f"Database error while creating goal: {e}")
-            db.session.rollback()
+            session.rollback()
             raise 
 
         # connection = sqlite3.connect("./cogs/goals.db")
@@ -311,5 +261,6 @@ class Goal(db.Model):
         logger.info(f"Successfully retreived progress of goal {goal_id}")
         return (progress, percent, reminder)
 
-# async def setup(bot):
-#     await bot.add_cog(GoalCog(bot))
+Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+session = Session()
