@@ -6,7 +6,6 @@ import settings, logging, sqlite3, typing
 from sqlalchemy import Text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from nudge_bot.db import db
 from nudge_bot.utils.logger import configure_logger
 from nudge_bot.models.goal import Goal
 
@@ -52,9 +51,12 @@ class GoalModal(discord.ui.Modal, title="Enter your goal here!"):
         Args:
             interaction: The discord interaction of the user's request.
 
+        TODO:
+            * check if possible to convert to int
         """
         logger.info(f"User submitted modal.")
-        action = Goal.create_goal(interaction.user.id, self.goal_title.value, self.goal_description.value, self.goal_target.value, "N")
+        converted = int(self.goal_target.value)
+        action = Goal.create_goal(interaction.user.id, self.goal_title.value, self.goal_description.value, converted, "N")
         channel = interaction.guild.get_channel(settings.LOGGER_CH)
 
         embed = discord.Embed(title=self.goal_title.value,

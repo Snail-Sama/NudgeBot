@@ -47,25 +47,21 @@ class Goal(Base):
             See about reminder being only a select few options.
         """
         logger.info(f"Validating goal.")
-        logger.info(f"{self.title}")
         if not self.title or not isinstance(self.title, str): # execution stops here
             logger.error(f"Title must be a non-empty string. Not {self.title}.")
-            raise ValueError("Title must be a non-empty string.")
-        else:
-            logger.info("else")
-        logger.info("does it make it here?")
+            raise ValueError(f"Title must be a non-empty string. Not {self.title}.")
         if self.description and not isinstance(self.description, str):
             logger.error(f"Goal description must be a string. Not {self.description}.")
-            raise ValueError("Goal description must be a string.")
+            raise ValueError(f"Goal description must be a string. Not {self.description}.")
         if self.target is None or not isinstance(self.target, int) or self.target < 0:
             logger.error(f"Target an integer at least 0. Not {self.target}.")
-            raise ValueError("Target an integer at least 0.")
+            raise ValueError(f"Target an integer at least 0. Not {self.target}")
         if self.progress is None or not isinstance(self.progress, int) or self.progress < 0:
             logger.error(f"Progress an integer at least 0. Not {self.progress}.")
-            raise ValueError("Progress an integer at least 0.")
+            raise ValueError(f"Progress an integer at least 0. Not {self.progress}")
         if not self.reminder or not isinstance(self.reminder, str):
             logger.error(f"Reminder must be a non-empty string. Not {self.reminder}.")
-            raise ValueError("Reminder must be a non-empty string.")
+            raise ValueError(f"Reminder must be a non-empty string. Not {self.reminder}.")
         logger.info(f"Valid goal.")
 
 
@@ -104,9 +100,8 @@ class Goal(Base):
 
         try:
             title=title.strip()
-            logger.info(title)
             logger.info(f"Check for existing goal with same compound key (title, target): ({title}, {target})")
-            existing = session.query(title, target=target).first() # execution stops here idk why
+            existing = session.query(Goal).filter(Goal.title==title, Goal.target==target).first() # execution stops here idk why
             logger.info(existing)
             if existing:
                 logger.error(f"Goal {title} - {target} already exists.")
