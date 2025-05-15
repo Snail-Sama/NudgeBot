@@ -140,21 +140,20 @@ class Goal(Base):
         logger.info(f"Deleting goal {goal_id}...")
 
         try:
-            goal = session.query(Goal.goal_id==goal_id)
+            goal = session.query(Goal).filter(Goal.goal_id==goal_id)
             if not goal:
                 logger.warning(f"Attempted to delete non-existent goal with ID {goal_id}")
                 raise ValueError(f"Goal with ID {goal_id} not found")
 
-            session.delete(goal)
+            session.query(Goal).filter(Goal.goal_id==goal_id).delete()
             session.commit()
+
             logger.info(f"Successfully deleted goal with ID {goal_id}")
 
         except SQLAlchemyError as e:
             logger.error(f"Database error while deleting goal with ID {goal_id}: {e}")
             session.rollback()
             raise
-
-        logger.info(f"Successfully deleted goal {goal_id}")
 
 
     @classmethod
@@ -180,16 +179,17 @@ class Goal(Base):
         logger.info(f"Logging progress {entry} to goal {goal_id}...")
 
         try:
-            goal = session.query(Goal).filter(Goal.goal_id==goal_id)
+            goal = session.query(Goal).filter(Goal.goal_id==goal_id).first()
+            logger.info(f"goal is: {goal}")
             if not goal:
                 logger.warning(f"Attempted to update non-existent goal with ID {goal_id}")
                 raise ValueError(f"Goal with ID {goal_id} not found")
             
-            goal.goal_progress += entry
+            goal.progress += entry
 
-            completed = goal.goal_progress >= goal.target
+            completed = goal.progress >= goal.target
 
-            session.query(Goal).filter(Goal.goal_id==goal_id).update({'progress': goal.goal_progress})
+            session.query(Goal).filter(Goal.goal_id==goal_id).update({'progress': goal.progress})
             session.commit()
 
         except SQLAlchemyError as e:
@@ -219,12 +219,13 @@ class Goal(Base):
         logger.info(f"Checking progress of goal {goal_id}...")
 
         try:
-            goal = session.query(Goal).filter(Goal.goal_id==goal_id)
-
-            if not goal:
+            result = session.query(Goal).filter(Goal.goal_id==goal_id)
+            if not result:
                 logger.warning(f"Attempted to check progress of non-existent goal with ID {goal_id}")
                 raise ValueError(f"Goal with ID {goal_id} not found")
             
+            goal = result[0]
+
             # calculates percent based on progress/target
             percent = (goal.progress / goal.target) * 100
 
