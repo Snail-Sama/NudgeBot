@@ -77,9 +77,11 @@ class Goal(Base):
             reminder: Frequency of the reminders the user wants to receive.
 
         Raises:
-        
+            ValueError: If any field is invalid or if a goal with the same compound key already exists. 
+            SQLAlchemyError: For any other database-related issues.
+
         TODO:
-            Add a try except statement for a sql error
+            * add a message to be sent when a duplicate goal is created
 
         """
         logger.info(f"Inserting goal: user_id - {user_id}, title - {title}, description - {description}, target - {target}, reminder - {reminder}")
@@ -121,23 +123,6 @@ class Goal(Base):
             logger.error(f"Database error while creating goal: {e}")
             session.rollback()
             raise 
-
-        # connection = sqlite3.connect("./cogs/goals.db")
-        # cursor = connection.cursor()
-        # # print("C")
-        # print(self.goal_id)
-        # if self.goal_id:
-        #     # print("A")
-        #     cursor.execute("UPDATE Goals SET target = ?, description = ?, progress = ?, title = ?, reminder = ? WHERE goal_id = ?", (target, description, 0, title, reminder, self.goal_id))
-        #     action = "updated"
-        # else:
-        #     # print("B")
-        #     cursor.execute("INSERT INTO Goals (user_id, target, description, progress, title, reminder, job) Values (?,?,?,?,?,?,?)", (user_id, target, description, 0, title, reminder, None))
-        #     action = "created"
-
-        # connection.commit()
-        # connection.close()
-        # return action
     
     
     @classmethod
@@ -148,23 +133,26 @@ class Goal(Base):
             goal_id: ID of the goal to be deleted.
 
         Raises:
-            TODO implement error for goal not found.
-        
-        TODO:
-            implement orm
+            ValueError: If the goal with the given ID does not exist.
+            SQLAlchemyError: For any database-related issues.
+    
         """
         logger.info(f"Deleting goal {goal_id}...")
 
-        # Connect to SQL database
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
+        try:
+            goal = session.query(Goal.goal_id==goal_id)
+            if not goal:
+                logger.warning(f"Attempted to delete non-existent goal with ID {goal_id}")
+                raise ValueError(f"Goal with ID {goal_id} not found")
 
-        # Delete goal via goal_id primary key
-        cursor.execute("DELETE FROM Goals WHERE goal_id = ?", (goal_id,))
+            session.delete(goal)
+            session.commit()
+            logger.info(f"Successfully deleted goal with ID {goal_id}")
 
-        # Close SQL database connection
-        connection.commit()
-        connection.close()
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while deleting goal with ID {goal_id}: {e}")
+            session.rollback()
+            raise
 
         logger.info(f"Successfully deleted goal {goal_id}")
 
@@ -182,7 +170,8 @@ class Goal(Base):
             Title and description of goal.
 
         Raises:
-            TODO implement sql errors
+            ValueError: If the goal with the given ID does not exist.
+            SQLAlchemyError: For any database-related issues.
 
         TODO:
             implement orm
@@ -190,35 +179,28 @@ class Goal(Base):
         """
         logger.info(f"Logging progress {entry} to goal {goal_id}...")
 
-        # Connect to SQL database
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
+        try:
+            goal = session.query(Goal).filter(Goal.goal_id==goal_id)
+            if not goal:
+                logger.warning(f"Attempted to update non-existent goal with ID {goal_id}")
+                raise ValueError(f"Goal with ID {goal_id} not found")
+            
+            goal.goal_progress += entry
 
-        # Grab the target and progress values
-        cursor.execute("SELECT target, description, progress, title FROM Goals WHERE goal_id = ?", (goal_id,))
-        target, description, goal_progress, title = cursor.fetchone()
+            completed = goal.goal_progress >= goal.target
 
-        #adds entry to what was already there
-        goal_progress += entry
+            session.query(Goal).filter(Goal.goal_id==goal_id).update({'progress': goal.goal_progress})
+            session.commit()
 
-        #check if progress has reached target
-        if goal_progress >= target:
-            #reset progress
-            completed = True
-            goal_progress = 0
-        else:
-            completed = False
-        
-        #update progress in SQL database
-        cursor.execute("UPDATE Goals SET progress = ? WHERE goal_id = ?", (goal_progress, goal_id))
-
-        # Close SQL database connection
-        connection.commit()
-        connection.close()
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while logging progress: {e}")
+            session.rollback()
+            raise 
 
         logger.info(f"Successfully logged progress towards goal {goal_id}")
-        return (completed, title, description)
+        return (completed, goal.title, goal.description)
     
+
     @classmethod
     def check_progress(cls, goal_id: int) -> tuple[int, float, str]:
         """Check progress of a goal in the database.
@@ -230,31 +212,29 @@ class Goal(Base):
             Progress and percent completed of goal. Current reminder setting (could change this for reminder cog). 
         
         Raises:
-            TODO implement sql errors
-
-        TODO:
-            ORM
+            ValueError: If the goal with the given ID does not exist.
+            SQLAlchemyError: For any database-related issues.
 
         """
         logger.info(f"Checking progress of goal {goal_id}...")
 
-        # Connect to SQL database
-        connection = sqlite3.connect("./cogs/goals.db")
-        cursor = connection.cursor()
+        try:
+            goal = session.query(Goal).filter(Goal.goal_id==goal_id)
 
-        # grabs target and progress from SQL database
-        cursor.execute("SELECT target, progress, reminder FROM Goals WHERE goal_id = ?", (goal_id,))
-        target, progress, reminder = cursor.fetchone()
+            if not goal:
+                logger.warning(f"Attempted to check progress of non-existent goal with ID {goal_id}")
+                raise ValueError(f"Goal with ID {goal_id} not found")
+            
+            # calculates percent based on progress/target
+            percent = (goal.progress / goal.target) * 100
 
-        # calculates percent based on progress/target
-        percent = (progress / target) * 100
-
-        # Close SQL database connection
-        connection.commit()
-        connection.close()
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while checking progress of goal: {e}")
+            session.rollback()
+            raise 
 
         logger.info(f"Successfully retreived progress of goal {goal_id}")
-        return (progress, percent, reminder)
+        return (goal.progress, percent, goal.reminder)
 
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
