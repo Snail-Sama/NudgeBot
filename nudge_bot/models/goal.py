@@ -1,18 +1,13 @@
-import discord
-from discord.ext import commands
-from discord import app_commands
-import settings, logging, sqlite3, typing
+import logging
 
-from sqlalchemy import Text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from nudge_bot.db import session, Base
 from nudge_bot.utils.logger import configure_logger
 
 from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship # relationship will help with another table
 
-engine = create_engine('sqlite:///nudge_bot/goals.db', echo=True)
+engine = create_engine('sqlite:///nudge_bot/goals.db', echo=False)
 
 Base = declarative_base()
 
@@ -45,17 +40,18 @@ class Goal(Base):
 
         TODO:
             See about reminder being only a select few options.
+
         """
         logger.info(f"Validating goal.")
-        if not self.title or not isinstance(self.title, str): # execution stops here
+        if not self.title or not isinstance(self.title, str):
             logger.error(f"Title must be a non-empty string. Not {self.title}.")
             raise ValueError(f"Title must be a non-empty string. Not {self.title}.")
         if self.description and not isinstance(self.description, str):
             logger.error(f"Goal description must be a string. Not {self.description}.")
             raise ValueError(f"Goal description must be a string. Not {self.description}.")
-        if self.target is None or not isinstance(self.target, int) or self.target < 0:
-            logger.error(f"Target an integer at least 0. Not {self.target}.")
-            raise ValueError(f"Target an integer at least 0. Not {self.target}")
+        if self.target is None or not isinstance(self.target, int) or self.target <= 0:
+            logger.error(f"Target an integer greater than 0. Not {self.target}.")
+            raise ValueError(f"Target an integer greather than 0. Not {self.target}")
         if self.progress is None or not isinstance(self.progress, int) or self.progress < 0:
             logger.error(f"Progress an integer at least 0. Not {self.progress}.")
             raise ValueError(f"Progress an integer at least 0. Not {self.progress}")
@@ -95,7 +91,7 @@ class Goal(Base):
                 progress = 0,
                 reminder = reminder
             )
-            goal.validate() # execution stops here when uncommented
+            goal.validate()
         except ValueError as e:
             logger.warning(f"Validation failed: {e}")
             raise
@@ -103,11 +99,11 @@ class Goal(Base):
         try:
             title=title.strip()
             logger.info(f"Check for existing goal with same compound key (title, target): ({title}, {target})")
-            existing = session.query(Goal).filter(Goal.title==title, Goal.target==target).first() # execution stops here idk why
+            existing = session.query(Goal).filter(Goal.title==title, Goal.target==target).first()
             logger.info(existing)
             if existing:
-                logger.error(f"Goal {title} - {target} already exists.")
-                raise ValueError(f"Goal '{title}' - '{target}' already exists.")
+                logger.error(f"Goal {title} - {target} already exists.1")
+                raise ValueError(f"Goal '{title}' - '{target}' already exists.1")
             
             session.add(goal)
             session.commit()
@@ -115,9 +111,9 @@ class Goal(Base):
 
         # Duplicate - do we need this one we might not? Try commenting this out when making unit tests
         except IntegrityError:
-            logger.error(f"Goal {title} - {target} already exists.")
+            logger.error(f"Goal {title} - {target} already exists.2")
             session.rollback()
-            raise ValueError(f"Goal {title} - {target} already exists.")
+            raise ValueError(f"Goal {title} - {target} already exists.2")
 
         except SQLAlchemyError as e:
             logger.error(f"Database error while creating goal: {e}")
@@ -171,9 +167,6 @@ class Goal(Base):
         Raises:
             ValueError: If the goal with the given ID does not exist.
             SQLAlchemyError: For any database-related issues.
-
-        TODO:
-            implement orm
         
         """
         logger.info(f"Logging progress {entry} to goal {goal_id}...")
@@ -217,7 +210,6 @@ class Goal(Base):
 
         """
         logger.info(f"Checking progress of goal {goal_id}...")
-
         try:
             result = session.query(Goal).filter(Goal.goal_id==goal_id)
             if not result:

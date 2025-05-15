@@ -4,8 +4,6 @@ from discord import app_commands
 import typing
 import settings
 
-from nudge_bot import cogs
-
 logger = settings.logging.getLogger("bot")
 
 def is_BotMeister():
@@ -15,8 +13,6 @@ def is_BotMeister():
             return True
     return app_commands.check(predicate)
 
-
-# def create_bot():
 
 def run():
     intents = discord.Intents.all()
@@ -36,8 +32,6 @@ def run():
         try:
             for cogs_file in settings.COGS_DIR.glob("*.py"):
                 if cogs_file.name != "__init__.py":
-                    cog_name = cogs_file.name[0].upper() + cogs_file.name[1:-3] + "Cog"
-                    # logger.info(f"{cog_name}")
                     await bot.load_extension(f"nudge_bot.cogs.{cogs_file.name[:-3]}")
         except ValueError as e:
             logger.warning(f"Cogs failed to load: {e}")
@@ -58,14 +52,14 @@ def run():
         data = []
         for cog in cogs:
             if current.lower() in cog.stem:
-                data.append(cog.stem) # data.append(app_commands.Choice(name=cog.stem, value=cog.stem))
+                data.append(app_commands.Choice(name=cog.stem, value=cog.stem))
         return data
     
     @bot.tree.command()
     @app_commands.autocomplete(choice=cogs_autocompletion)
     @is_BotMeister()
     async def reload(interaction: discord.Interaction, choice: str):
-        await bot.reload_extension(f"cogs.{choice.lower()}")
+        await bot.reload_extension(f"nudge_bot/cogs.{choice.lower()}")
         await interaction.response.send_message(f"The COG cogs.{choice.lower()} has been reloaded", ephemeral=True)
     
     @reload.error
