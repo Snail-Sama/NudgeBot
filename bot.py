@@ -4,9 +4,14 @@ from discord import app_commands
 import typing
 import settings
 
+from discord.app_commands import CheckFailure
+
 logger = settings.logging.getLogger("bot")
 
 def is_BotMeister():
+    """Checks a user for the BotMeister role before executing certain commands.
+
+    """
     def predicate(interaction : discord.Interaction):
         role = discord.utils.get(interaction.guild.roles, name="BotMeister") # Get the role
         if role in interaction.user.roles:
@@ -20,10 +25,7 @@ def run():
 
     @bot.event
     async def on_ready():
-        """Event triggered when the bot is started up.
-
-        Awaits:
-            TODO what is the bot.tree.sync
+        """Event triggered when the bot is started up that loads all cogs.
         
         """
         logger.info(f"User: {bot.user} (ID: {bot.user.id})")
@@ -59,34 +61,61 @@ def run():
     @app_commands.autocomplete(choice=cogs_autocompletion)
     @is_BotMeister()
     async def reload(interaction: discord.Interaction, choice: str):
-        await bot.reload_extension(f"nudge_bot/cogs.{choice.lower()}")
-        await interaction.response.send_message(f"The COG cogs.{choice.lower()} has been reloaded", ephemeral=True)
-    
-    @reload.error
-    async def reload_error(interaction: discord.Interaction, error):
-        await interaction.response.send_message("Not allowed!", ephemeral=True)
+        """A user with the BotMeister role may reload a cog after making changes so that the whole bot doesn't have to be reloaded.
+
+        Raises:
+            CheckFailure: If a user does not have the BotMeister role.
+        
+        """
+        logger.info(f"Received request to reload {choice.lower()}")
+        try:
+            await bot.reload_extension(f"nudge_bot.cogs.{choice.lower()}")
+            await interaction.response.send_message(f"The COG cogs.{choice.lower()} has been reloaded", ephemeral=True)
+        except CheckFailure as e:
+            await interaction.response.send_message("Not allowed!", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"An unknown error occurred: {e}", ephemeral=True)
+            
     
     @bot.tree.command()
     @app_commands.autocomplete(choice=cogs_autocompletion)
     @is_BotMeister()
     async def load(interaction: discord.Interaction, choice: str):
-        await bot.load_extension(f"cogs.{choice.lower()}")
-        await interaction.response.send_message(f"The COG cogs.{choice.lower()} has been loaded", ephemeral=True)
+        """User with the BotMeister role may load a new cog after creating a new one in the cogs folder.
 
-    @load.error
-    async def load_error(interaction: discord.Interaction, error):
-        await interaction.response.send_message("Not allowed!", ephemeral=True)
+        Raises:
+            CheckFailure: If a user does not have the BotMeister role.
+        
+        """
+        logger.info(f"Received request to reload {choice.lower()}")
+        try:
+            await bot.load_extension(f"nudge_bot.cogs.{choice.lower()}")
+            await interaction.response.send_message(f"The COG cogs.{choice.lower()} has been loaded", ephemeral=True)
+        except CheckFailure as e:
+            await interaction.response.send_message("Not allowed!", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"An unknown error occurred: {e}", ephemeral=True)
+
 
     @bot.tree.command()
     @app_commands.autocomplete(choice=cogs_autocompletion)
     @is_BotMeister()
     async def unload(interaction: discord.Interaction, choice: str):
-        await bot.unload_extension(f"cogs.{choice.lower()}")
-        await interaction.response.send_message(f"The COG cogs.{choice.lower()} has been unloaded", ephemeral=True)
+        """User with the BotMeister role may unload a cog from the bot.
 
-    @unload.error
-    async def unload_error(interaction: discord.Interaction, error):
-        await interaction.response.send_message("Not allowed!", ephemeral=True)
+        Raises:
+            CheckFailure: If a user does not have the BotMeister role.
+        
+        """
+        logger.info(f"Received request to unload {choice.lower()}")
+        try:
+            await bot.unload_extension(f"cogs.{choice.lower()}")
+            await interaction.response.send_message(f"The COG cogs.{choice.lower()} has been unloaded", ephemeral=True)
+        except CheckFailure as e:
+            await interaction.response.send_message("Not allowed!", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"An unknown error occurred: {e}", ephemeral=True)
+
     
     bot.run(settings.DISCORD_API_SECRET, root_logger=True)
     
