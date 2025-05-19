@@ -32,6 +32,10 @@ class Goal(Base):
     progress = Column(Integer, nullable=True, default=0)
     reminder = Column(String, nullable=True, default='N')
 
+    def __str__(self) -> str:
+        goal_string = f"{self.title}: {self.description}\n\tTarget: {self.target}\n\tProgress: {self.progress}\n\tReminder: {self.reminder}"
+        return goal_string
+
     def validate(self) -> None:
         """Validates the goal instance before committing to the database.
 
@@ -252,17 +256,7 @@ class Goal(Base):
                 logger.warning(f"No goals associated with user ID {user_id}")
                 raise ValueError(f"No goals associated with user ID {user_id}")
             
-            goals: list[dict] = []
-
-            for goal in result:
-                goal_dict = {
-                    "title": goal.title,
-                    "description": goal.description,
-                    "target": goal.target,
-                    "progress": goal.progress,
-                    "reminder": goal.reminder
-                }
-                goals.append(goal_dict)
+            goals: list[Goal] = [str(goal) for goal in result]
                 
             logger.info(f"Successfully retreived all goals")
             return goals

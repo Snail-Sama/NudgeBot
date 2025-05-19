@@ -190,11 +190,17 @@ class GoalCog(commands.Cog):
 
         goals: list[dict] = Goal.get_all_goals(interaction.user.id)
 
+        description = ""
+        counter = 1
+        for goal in goals:
+            description += f"Goal #{counter}\n" + goal + "\n\n"
+            counter += 1
+        description = description[0:-2]
+
         channel = interaction.guild.get_channel(settings.LOGGER_CH)
         embed = discord.Embed(title=f"All of {interaction.user.name}'s goals",
-                            description=goals,
+                            description=description,
                             color=discord.Color.gold())
-        embed.set_author(name=interaction.user.name)
         await channel.send(embed=embed)
         await interaction.response.send_message(f"Check {channel.mention} for your goals!", ephemeral=True)
 
