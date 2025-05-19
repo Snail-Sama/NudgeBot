@@ -178,9 +178,36 @@ class GoalCog(commands.Cog):
         await interaction.response.send_message(f"You have completed {progress} which means you are {percent:.2f}% done! Current reminder: {reminder}", ephemeral=True)
 
 
+    @app_commands.command(name="all-goals", description="See all of your goals")
+    async def get_all_goals_command(self, interaction: discord.Interaction):
+        """User request details regarding all of their goals.
+
+        Args:
+            interaction: The discord interaction of the user's request.
+        
+        """
+        logger.info(f"Received request to retrieve all goals...")
+
+        goals: list[dict] = Goal.get_all_goals(interaction.user.id)
+
+        description = ""
+        counter = 1
+        for goal in goals:
+            description += f"Goal #{counter}\n" + goal + "\n\n"
+            counter += 1
+        description = description[0:-2]
+
+        channel = interaction.guild.get_channel(settings.LOGGER_CH)
+        embed = discord.Embed(title=f"All of {interaction.user.name}'s goals",
+                            description=description,
+                            color=discord.Color.gold())
+        await channel.send(embed=embed)
+        await interaction.response.send_message(f"Check {channel.mention} for your goals!", ephemeral=True)
+
+
     @app_commands.command(name="edit-goal", description="Edit a goal you had")
     @app_commands.autocomplete(goal_id=goal_autocomplete)
-    async def edit_goal(self, interaction : discord.Interaction, goal_id: int):
+    async def edit_goal_command(self, interaction: discord.Interaction, goal_id: int):
         """The user may edit the fields of a goal. Sends a GoalModal for input.
 
         Args:

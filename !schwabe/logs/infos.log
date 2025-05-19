@@ -1,13 +1,2 @@
-INFO       - 2025-05-13 23:00:37,164 - client          : logging in using static token
-INFO       - 2025-05-13 23:00:38,135 - gateway         : Shard ID None has connected to Gateway (Session ID: 83bd2b3144485a0bf03a20677feb257f).
-INFO       - 2025-05-13 23:19:45,949 - gateway         : Shard ID None session has been invalidated.
-INFO       - 2025-05-13 23:19:51,326 - gateway         : Shard ID None has connected to Gateway (Session ID: 92840764776c4d23d26a1cc712cadcdb).
-ERROR      - 2025-05-13 23:19:53,361 - client          : Ignoring exception in on_ready
-Traceback (most recent call last):
-  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/client.py", line 481, in _run_event
-    await coro(*args, **kwargs)
-  File "/root/NudgeBot/bot.py", line 41, in on_ready
-    await bot.load_extension(f"nudge_bot.cogs.{cogs_file.name[:-3]}")
-  File "/root/NudgeBot/venv/lib/python3.12/site-packages/discord/ext/commands/bot.py", line 1023, in load_extension
-    raise errors.ExtensionAlreadyLoaded(name)
-discord.ext.commands.errors.ExtensionAlreadyLoaded: Extension 'nudge_bot.cogs.goalcog' is already loaded.
+INFO       - 2025-05-19 13:38:09,402 - client          : logging in using static token
+INFO       - 2025-05-19 13:38:10,606 - gateway         : Shard ID None has connected to Gateway (Session ID: ea2ec7681d43019daa73ff73c9226c93).

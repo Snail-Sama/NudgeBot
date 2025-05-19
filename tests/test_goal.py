@@ -1,6 +1,6 @@
 import pytest
 
-from nudge_bot.cogs.goal import Goal
+from nudge_bot.models.goal import Goal
 from pytest_mock import MockerFixture
 
 from sqlalchemy.orm import sessionmaker
@@ -9,7 +9,7 @@ from unittest import TestCase
 
 Session = sessionmaker()
 
-engine = create_engine("mysql+mysqldb://username:password@5000:5000/goals.db")
+engine = create_engine("sqlite:///nudge_bot/goals.db", echo=True)
 
 # --- Fixtures ---
 class TestGoal(TestCase):

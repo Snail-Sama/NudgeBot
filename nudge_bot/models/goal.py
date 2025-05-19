@@ -32,6 +32,10 @@ class Goal(Base):
     progress = Column(Integer, nullable=True, default=0)
     reminder = Column(String, nullable=True, default='N')
 
+    def __str__(self) -> str:
+        goal_string = f"{self.title}: {self.description}\n\tTarget: {self.target}\n\tProgress: {self.progress}\n\tReminder: {self.reminder}"
+        return goal_string
+
     def validate(self) -> None:
         """Validates the goal instance before committing to the database.
 
@@ -221,13 +225,48 @@ class Goal(Base):
             # calculates percent based on progress/target
             percent = (goal.progress / goal.target) * 100
 
+            logger.info(f"Successfully retreived progress of goal {goal_id}")
+            return (goal.progress, percent, goal.reminder)
+
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while checking progress of goal: {e}")
+            session.rollback()
+            raise        
+    
+
+    @classmethod
+    def get_all_goals(cls, user_id: int) -> list[dict]:
+        """Retrieve all goals in the database for a user.
+
+        Args:
+            user_id: ID of the user requesting all goals.
+
+        Returns:
+            List of dictionaries containing all goal info.
+        
+        Raises:
+            ValueError: If the user with the given ID does not exist.
+            SQLAlchemyError: For any database-related issues.
+
+        """
+        logger.info(f"Getting goals for user {user_id}...")
+        try:
+            result = session.query(Goal).filter(Goal.user_id==user_id).all()
+            if not result:
+                logger.warning(f"No goals associated with user ID {user_id}")
+                raise ValueError(f"No goals associated with user ID {user_id}")
+            
+            goals: list[Goal] = [str(goal) for goal in result]
+                
+            logger.info(f"Successfully retreived all goals")
+            return goals
+
         except SQLAlchemyError as e:
             logger.error(f"Database error while checking progress of goal: {e}")
             session.rollback()
             raise 
 
-        logger.info(f"Successfully retreived progress of goal {goal_id}")
-        return (goal.progress, percent, goal.reminder)
+        
 
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
