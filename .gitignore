@@ -3,4 +3,4 @@ token.txt
 .env
 .log
 .pyc
-venv
+venv/
