@@ -16,9 +16,9 @@ COGS_DIR = BASE_DIR / "nudge_bot/cogs"
 
 VIDEOCMDS_DIR = BASE_DIR / "videocmds"
 
-GUILDS_ID = discord.Object(id=int(os.getenv("GUILD")))
-OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-LOGGER_CH = int(os.getenv("FEEDBACK_CH", 0))
+GUILDS_ID = discord.Object(id=int(os.getenv("GUILD_ID")))
+# OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+LOGGER_CH = int(os.getenv("CHANNEL_ID", 0))
 # GUILD_ID_INT = int(os.getenv("GUILD"))
 
 
