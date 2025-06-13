@@ -4,6 +4,8 @@ from discord import app_commands
 import typing
 import settings
 
+from nudge_bot.cogs.music_cog import music_cog
+
 from discord.app_commands import CheckFailure
 
 logger = settings.logging.getLogger("bot")
