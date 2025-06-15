@@ -8,5 +8,5 @@ requests==2.32.3
 discord==2.3.2
 schedule==1.2.0
 PyNaCl==1.5.0
-youtube-dl==2021.12.17
+yt-dlp==2025.06.09
 urllib3==2.4.0

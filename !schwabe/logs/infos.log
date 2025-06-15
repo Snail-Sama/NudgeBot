@@ -1,2 +1,23 @@
-INFO       - 2025-05-19 13:38:09,402 - client          : logging in using static token
-INFO       - 2025-05-19 13:38:10,606 - gateway         : Shard ID None has connected to Gateway (Session ID: ea2ec7681d43019daa73ff73c9226c93).
+INFO       - 2025-06-15 18:44:06,996 - client          : logging in using static token
+INFO       - 2025-06-15 18:44:08,109 - gateway         : Shard ID None has connected to Gateway (Session ID: 62d20f9e1cf9feef78ca0aa5fc874e12).
+INFO       - 2025-06-15 18:44:22,406 - voice_state     : Connecting to voice...
+INFO       - 2025-06-15 18:44:22,406 - voice_state     : Starting voice handshake... (connection attempt 1)
+INFO       - 2025-06-15 18:44:22,513 - voice_state     : Voice handshake complete. Endpoint found: newark7091.discord.media
+INFO       - 2025-06-15 18:44:22,728 - voice_state     : Voice connection complete.
+INFO       - 2025-06-15 18:44:58,785 - voice_state     : The voice handshake is being terminated for Channel ID 1120146681346936906 (Guild ID 1120146681346936902)
+INFO       - 2025-06-15 18:44:58,791 - player          : ffmpeg process 75981 has not terminated. Waiting to terminate...
+INFO       - 2025-06-15 18:44:58,802 - player          : ffmpeg process 75981 should have terminated with a return code of -9.
+INFO       - 2025-06-15 18:45:08,437 - voice_state     : Connecting to voice...
+INFO       - 2025-06-15 18:45:08,437 - voice_state     : Starting voice handshake... (connection attempt 1)
+INFO       - 2025-06-15 18:45:08,555 - voice_state     : Voice handshake complete. Endpoint found: newark7091.discord.media
+INFO       - 2025-06-15 18:45:08,796 - voice_state     : Voice connection complete.
+INFO       - 2025-06-15 18:48:33,836 - voice_state     : The voice handshake is being terminated for Channel ID 1120146681346936906 (Guild ID 1120146681346936902)
+INFO       - 2025-06-15 18:48:33,846 - player          : ffmpeg process 76194 has not terminated. Waiting to terminate...
+INFO       - 2025-06-15 18:48:33,864 - player          : ffmpeg process 76194 should have terminated with a return code of -9.
+INFO       - 2025-06-15 18:48:43,964 - voice_state     : Connecting to voice...
+INFO       - 2025-06-15 18:48:43,964 - voice_state     : Starting voice handshake... (connection attempt 1)
+INFO       - 2025-06-15 18:48:44,036 - voice_state     : Voice handshake complete. Endpoint found: newark7091.discord.media
+INFO       - 2025-06-15 18:48:44,301 - voice_state     : Voice connection complete.
+INFO       - 2025-06-15 18:48:53,032 - voice_state     : The voice handshake is being terminated for Channel ID 1120146681346936906 (Guild ID 1120146681346936902)
+INFO       - 2025-06-15 18:48:53,043 - player          : ffmpeg process 77019 has not terminated. Waiting to terminate...
+INFO       - 2025-06-15 18:48:53,047 - player          : ffmpeg process 77019 should have terminated with a return code of -9.

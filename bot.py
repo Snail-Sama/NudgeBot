@@ -4,7 +4,7 @@ from discord import app_commands
 import typing
 import settings
 
-from nudge_bot.cogs.music_cog import music_cog
+from nudge_bot.cogs.music_cog import MusicCog
 
 from discord.app_commands import CheckFailure
 
