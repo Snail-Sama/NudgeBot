@@ -221,6 +221,68 @@ class MusicCog(commands.Cog):
                     logger.info("Added to queue.")
 
     @commands.command(
+        name="add",
+        aliases=["a"],
+        help=""
+    )
+    async def add(self, ctx, *args):
+        search = " ".join(args)
+        try:
+            userChannel = ctx.author.voice.channel
+        except:
+            await ctx.send("You must be in a voice channel.")
+            return
+        if not args:
+            await ctx.send("You need to specify a song to be added.")
+        else:
+            song = self.extract_YT(self.search_YT(search)[0])
+            if type(song) == type(False):
+                await ctx.send("Could not download the song. Incorrect format, try different keywords.")
+                return
+            else:
+                self.musicQueue[ctx.guild.id].append([song, userChannel])
+                message = "Added to queue"
+                await ctx.send(message)
+
+    @commands.command(
+        name="pause",
+        aliases=["stop", "pa"],
+        help=""
+    )
+    async def pause(self, ctx):
+        id = int(ctx.guild.id)
+        if not self.vc[id]:
+            await ctx.send("There is no audio to be paused at the moment.")
+            logger.warning("There is no audio to be paused at the moment.")
+        elif self.is_playing[id]:
+            await ctx.send("Audio paused!")
+            logger.info("Audio paused!")
+            self.is_playing[id] = False
+            self.is_paused[id] = True
+            self.vc[id].pause()
+        elif self.is_paused[id]:
+            logger.warning("Already paused.")
+
+    @commands.command(
+        name="resume",
+        aliases=["re"],
+        help=""
+    )
+    async def resume(self, ctx):
+        id = int(ctx.guild.id)
+        if not self.vc[id]:
+            await ctx.send("There is no audio to be played at the moment.")
+            logger.warning("There is no audio to be played at the moment.")
+        elif self.is_paused[id]:
+            await ctx.send("The audio is now playing!")
+            logger.info("The audio is now playing!")
+            self.is_playing[id] = True
+            self.is_paused[id] = False
+            self.vc[id].resume()
+        elif self.is_playing[id]:
+            logger.warning("Already playing.")
+
+    @commands.command(
         name="join",
         aliases=["j"],
         help=""
