@@ -74,9 +74,25 @@ class MusicCog(commands.Cog):
         avatar = author.avatar.url
 
         embed = discord.Embed(
-            title = "Now laying",
+            title = "Now Playing",
             description=f'[{title}]({link})',
             colour = self.embedBlue
+        )
+        embed.set_thumbnail(url=thumbnail)
+        embed.set_footer(text=f'Song added by: {str(author)}', icon_url=avatar)
+        return embed
+    
+    def added_song_embed(self, ctx, song):
+        title = song['title']
+        link = song['link']
+        thumbnail = song['thumbnail']
+        author = ctx.author
+        avatar = author.avatar.url
+
+        embed = discord.Embed(
+            title = "Song Added to Queue!",
+            description=f'[{title}]({link})',
+            colour = self.embedRed
         )
         embed.set_thumbnail(url=thumbnail)
         embed.set_footer(text=f'Song added by: {str(author)}', icon_url=avatar)
@@ -216,8 +232,8 @@ class MusicCog(commands.Cog):
                 if not self.is_playing[id]:
                     await self.play_music(ctx)
                 else:
-                    message = "Added to queue"
-                    await ctx.send(message)
+                    message = self.added_song_embed(ctx, song)
+                    await ctx.send(embed=message)
                     logger.info("Added to queue.")
 
     @commands.command(
@@ -226,23 +242,28 @@ class MusicCog(commands.Cog):
         help=""
     )
     async def add(self, ctx, *args):
+        logger.info("Received request to add a song to the queue.")
         search = " ".join(args)
         try:
             userChannel = ctx.author.voice.channel
         except:
             await ctx.send("You must be in a voice channel.")
+            logger.warning("You must be in a voice channel.")
             return
         if not args:
             await ctx.send("You need to specify a song to be added.")
+            logger.warning("You need to specify a song to be added.")
         else:
             song = self.extract_YT(self.search_YT(search)[0])
             if type(song) == type(False):
                 await ctx.send("Could not download the song. Incorrect format, try different keywords.")
+                logger.error("Could not download the song.")
                 return
             else:
                 self.musicQueue[ctx.guild.id].append([song, userChannel])
-                message = "Added to queue"
-                await ctx.send(message)
+                message = self.added_song_embed(ctx, song)
+                await ctx.send(embed=message)
+                logger.info("Added to queue.")
 
     @commands.command(
         name="pause",
@@ -292,8 +313,10 @@ class MusicCog(commands.Cog):
             userChannel = ctx.author.voice.channel
             await self.join_VC(ctx, userChannel)
             await ctx.send(f'NudgeBot has joined {userChannel}')
+            logger.info(f'NudgeBot has joined {userChannel}')
         else:
             await ctx.send("You must be connected to a voice channel.")
+            logger.warning("You must be connected to a voice channel.")
 
     @commands.command(
         name="leave",
@@ -307,7 +330,9 @@ class MusicCog(commands.Cog):
         self.queueIndex[id] = 0
         if self.vc[id] != None:
             await ctx.send("NudgeBot has left the chat.")
+            logger.info("NudgeBot has left the chat.")
             await self.vc[id].disconnect()
+            self.vc[id] = None
 
 async def setup(bot):
     await bot.add_cog(MusicCog(bot))
