@@ -15,6 +15,25 @@ import logging
 logger = logging.getLogger(__name__)
 configure_logger(logger)
 
+class MusicDropdown(discord.ui.Select):
+    def __init__(self, cog, ctx, selectOptions):
+        self.cog = cog
+        self.ctx = ctx
+        options=selectOptions
+
+        super().__init__(placeholder="Select an option", options=options, min_values=1, max_values=1)
+
+    async def callback(self, interaction: discord.Interaction):
+        logger.info("Dropdown callback.")
+        await self.cog.selection_submit(ctx=self.ctx, song=self.values[0])
+        interaction.response.is_done()
+
+class MusicView(discord.ui.View):
+    def __init__(self, cog, ctx, selectOptions):
+        super().__init__()
+        self.add_item(MusicDropdown(cog=cog, ctx=ctx, selectOptions=selectOptions))
+    
+
 class MusicCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -112,6 +131,19 @@ class MusicCog(commands.Cog):
         else:
             await self.vc[id].move_to(channel)
             logger.info("Successfully switched voice channels.")
+    
+    def get_YT_title(self, videoID):
+        params = {
+            "format": "json", 
+            "url": "https://www.youtube.com/watch?v=%s" % videoID
+        }
+        url = "https://www.youtube.com/oembed"
+        query_string = parse.urlencode(params)
+        url = url + "?" + query_string
+        with request.urlopen(url) as response:
+            responseText = response.read()
+            data = json.loads(responseText.decode())
+            return data['title']
 
     def search_YT(self, search):
         logger.info("Searching YouTube...")
@@ -264,6 +296,70 @@ class MusicCog(commands.Cog):
                 message = self.added_song_embed(ctx, song)
                 await ctx.send(embed=message)
                 logger.info("Added to queue.")
+
+    @commands.command(
+        name="search",
+        aliases=["find", "sr"],
+        help=""
+    )
+    async def search(self, ctx, *args):
+        search = " ".join(args)
+        songNames = []
+        selectionOptions = []
+        embedText = ""
+
+        if not args:
+            await ctx.send("You must specify search terms to use this command.")
+            logger.error("No search terms supplied.")
+            return
+        try:
+            userChannel = ctx.author.voice.channel
+        except:
+            await ctx.send("You must be in a voice channel.")
+            logger.error("Not in a voice channel")
+            return
+        
+        await ctx.send("Fetching search results...")
+        logger.info("Fetching search resutls...")
+
+        songTokens = list(set(self.search_YT(search))) # come back to this and still get top ten results without duplicates
+
+        for i, token in enumerate(songTokens):
+            url = "https://www.youtube.com/watch?v=" + token
+            name = self.get_YT_title(token)
+            songNames.append(name)
+            embedText += f"{i+1} - [{name}]({url})\n"
+
+        for i, title, token in zip(range(10), enumerate(songNames), enumerate(songTokens)):
+            selectionOptions.append(SelectOption(
+                label=f"{i+1} - {title[1][:100]}", value="https://www.youtube.com/watch?v=" + token[1]))
+            
+        searchResults = discord.Embed(
+            title="Search Results",
+            description=embedText,
+            colour=self.embedRed
+        )
+        
+        message = await ctx.send(embed=searchResults, view=MusicView(cog=self, ctx=ctx, selectOptions=selectionOptions))
+        logger.info("here")
+
+    async def selection_submit(self, ctx, song):
+        songRef = self.extract_YT(song)
+        if type(songRef) == type(True):
+            await ctx.send("Could not download the song. Incorrect format, try different keywords.")
+            logger.error("Could not download the song. Incorrect format, try different keywords.")
+            return
+        embedResponse = discord.Embed(
+            title=f"{songRef["title"]} Selected",
+            description=f"[{songRef["title"]}]({songRef["link"]}) added to the queue!",
+            colour=self.embedRed
+        )
+        embedResponse.set_thumbnail(url=songRef["thumbnail"])
+        # await message.delete()
+        await ctx.send(embed=embedResponse)
+        userChannel = ctx.author.voice.channel
+        self.musicQueue[ctx.guild.id].append([songRef, userChannel])
+
 
     @commands.command(
         name="pause",
