@@ -116,6 +116,22 @@ class MusicCog(commands.Cog):
         embed.set_thumbnail(url=thumbnail)
         embed.set_footer(text=f'Song added by: {str(author)}', icon_url=avatar)
         return embed
+    
+    def removed_song_embed(self, ctx, song):
+        title = song['title']
+        link = song['link']
+        thumbnail = song['thumbnail']
+        author = ctx.author
+        avatar = author.avatar.url
+
+        embed = discord.Embed(
+            title = "Song Removed from Queue!",
+            description=f'[{title}]({link})',
+            colour = self.embedRed
+        )
+        embed.set_thumbnail(url=thumbnail)
+        embed.set_footer(text=f'Song removed by: {str(author)}', icon_url=avatar)
+        return embed
 
     async def join_VC(self, ctx, channel):
         id = int(ctx.guild.id)
@@ -298,6 +314,31 @@ class MusicCog(commands.Cog):
                 logger.info("Added to queue.")
 
     @commands.command(
+        name="remove",
+        aliases=["rm"],
+        help=""
+    )
+    async def remove(self, ctx): # only removes final song from queue, come back to make it any song in the queue
+        id = int(ctx.guild.id)
+        if self.musicQueue[id] != []:
+            song = self.musicQueue[id][-1][0]
+            removeSongEmbed = "song removed"
+            await ctx.send(removeSongEmbed)
+        else:
+            await ctx.send("There are no songs to be removed in the queue.")
+        self.musicQueue[id] = self.musicQueue[id][:-1]
+        if self.musicQueue[id] == []:
+            if self.vc[id] != None and self.is_playing[id]:
+                self.is_playing[id] = self.is_paused[id] = False
+                await self.vc[id].disconnect() # clearing queue. could make this a helper
+                self.vc[id] = None
+            self.queueIndex[id] = 0
+        elif self.queueIndex[id] == len(self.musicQUeue[id]) and self.vc[id] != None and self.vc[id]:
+            self.vc[id].pause()
+            self.queueIndex[id] -= 1
+            await self.play_music(ctx)
+
+    @commands.command(
         name="search",
         aliases=["find", "sr"],
         help=""
@@ -341,7 +382,6 @@ class MusicCog(commands.Cog):
         )
         
         message = await ctx.send(embed=searchResults, view=MusicView(cog=self, ctx=ctx, selectOptions=selectionOptions))
-        logger.info("here")
 
     async def selection_submit(self, ctx, song):
         songRef = self.extract_YT(song)
@@ -398,6 +438,98 @@ class MusicCog(commands.Cog):
             self.vc[id].resume()
         elif self.is_playing[id]:
             logger.warning("Already playing.")
+
+    @commands.command(
+        name="previous",
+        aliases=["pre"],
+        help=""
+    )
+    async def previous(self, ctx):
+        id = int(ctx.guild.id)
+        if self.vc[id] == None:
+            await ctx.send("You need to be in a VC to use this command.")
+        elif self.queueIndex[id] <= 0:
+            await ctx.send("There is no previous song in the queue. Replaying current song.")
+            self.vc[id].pause()
+            await self.play_music(ctx)
+        elif self.vc[id] != None and self.vc[id]:
+            self.vc[id].pause()
+            self.queueIndex[id] -= 1
+            await self.play_music(ctx)
+
+    @commands.command(
+        name="skip",
+        aliases=["sk"],
+        help=""
+    )
+    async def skip(self, ctx):
+        id = int(ctx.guild.id)
+        if self.vc[id] == None:
+            await ctx.send("You need to be in a VC to use this command.")
+        elif self.queueIndex[id] >= len(self.musicQueue[id]) -1:
+            await ctx.send("There are no more songs in the queue.")
+            if self.vc[id] != None and self.is_playing[id]:
+                self.is_playing[id] = self.is_paused[id] = False
+                self.vc[id].stop()
+            if self.musicQueue[id] != []:
+                self.musicQueue[id] = []
+            self.queueIndex[id] = 0
+        elif self.vc[id] != None and self.vc[id]:
+            self.vc[id].pause()
+            self.queueIndex[id] += 1
+            await self.play_music(ctx)
+
+    @commands.command(
+        name="queue",
+        aliases=["list", "q"],
+        help=""
+    )
+    async def queue(self, ctx):
+        id = int(ctx.guild.id)
+        returnValue = ""
+        if self.musicQueue[id] == []:
+            await ctx.send("There are no songs in the queue.")
+            return
+        
+        for i in range(self.queueIndex[id], len(self.musicQueue[id])):
+            upNextSongs = len(self.musicQueue[id]) - self.queueIndex[id]
+            if i > 5 + upNextSongs:
+                break
+            returnIndex = i - self.queueIndex[id]
+            if self.is_playing[id] or self.is_paused[id]:
+                if returnIndex == 0 and self.is_playing[id]:
+                    returnIndex = "Playing"
+                elif returnIndex == 0 and self.is_paused[id]:
+                    returnIndex = "Paused"
+                elif returnIndex == 1:
+                    returnIndex = "Next"
+            returnValue += f"{returnIndex} - [{self.musicQueue[id][i][0]['title']}]({self.musicQueue[id][i][0]['link']})\n"
+
+            if returnValue == "":
+                await ctx.send("There are no songs in the queue.")
+                return
+            
+        queue = discord.Embed(
+            title="Current queue",
+            description=returnValue,
+            colour=self.embedGreen
+        )
+        await ctx.send(embed=queue)
+
+    @commands.command(
+        name="clear",
+        aliases=["cl"],
+        help=""
+    )
+    async def clear(self, ctx):
+        id = int(ctx.guild.id)
+        if self.vc[id] != None and self.is_playing[id]:
+            self.is_playing[id] = self.is_paused[id] = False
+            self.vc[id].stop()
+        if self.musicQueue[id] != []:
+            await ctx.send("The music queue has been cleared.")
+            self.musicQueue[id] = []
+        self.queueIndex[id] = 0
 
     @commands.command(
         name="join",

@@ -4,8 +4,6 @@ from discord import app_commands
 import typing
 import settings
 
-from nudge_bot.cogs.music_cog import MusicCog
-
 from discord.app_commands import CheckFailure
 
 logger = settings.logging.getLogger("bot")
@@ -24,7 +22,8 @@ def is_BotMeister():
 def run():
     intents = discord.Intents.all()
     bot = commands.Bot(command_prefix=".", intents = intents)
-
+    bot.remove_command('help')
+    
     @bot.event
     async def on_ready():
         """Event triggered when the bot is started up that loads all cogs.

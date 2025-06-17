@@ -1,2 +1,4 @@
-INFO       - 2025-06-17 00:20:43,860 - client          : logging in using static token
-INFO       - 2025-06-17 00:20:44,888 - gateway         : Shard ID None has connected to Gateway (Session ID: 762987e0a1872d3a1072f08cb9517356).
+INFO       - 2025-06-17 17:14:34,753 - client          : logging in using static token
+INFO       - 2025-06-17 17:14:35,639 - gateway         : Shard ID None has connected to Gateway (Session ID: 5f414e4aae3e435a8b72afbbf4ff2d46).
+ERROR      - 2025-06-17 17:15:23,154 - bot             : Ignoring exception in command None
+discord.ext.commands.errors.CommandNotFound: Command "ehlp" is not found
