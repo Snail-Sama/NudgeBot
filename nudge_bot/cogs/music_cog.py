@@ -26,7 +26,7 @@ class MusicDropdown(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         logger.info("Dropdown callback.")
         await self.cog.selection_submit(ctx=self.ctx, song=self.values[0])
-        interaction.response.is_done()
+        interaction.response.is_done()  
 
 class MusicView(discord.ui.View):
     def __init__(self, cog, ctx, selectOptions):
