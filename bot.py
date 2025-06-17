@@ -22,6 +22,7 @@ def is_BotMeister():
 def run():
     intents = discord.Intents.all()
     bot = commands.Bot(command_prefix=".", intents = intents)
+    bot.remove_command('help')
 
     @bot.event
     async def on_ready():
@@ -117,7 +118,7 @@ def run():
             await interaction.response.send_message(f"An unknown error occurred: {e}", ephemeral=True)
 
     
-    bot.run(settings.DISCORD_API_SECRET, root_logger=True)
+    bot.run(settings.DISCORD_API_SECRET, root_logger=False)
     
 
 if __name__ == "__main__":
